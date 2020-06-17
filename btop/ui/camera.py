@@ -101,18 +101,27 @@ class PBRT_PT_camera(bpy.types.Panel):
         # Need to test what is for this line
         layout.use_property_split = True
 
-        cam_props = context.camera.pbrt
+        cam_props = context.camera.pbrt_camera_props
         layout.row().prop(cam_props, "camera_type", text="Camera Type")
 
         col = layout.column()
-        if cam_props.camera_type == 'perspective':
-            pass
-        elif cam_props.camera_type == 'orthographic':
-            pass
-        elif cam_props.camera_type == 'environment':
-            pass
-        elif cam_props.camera_type == 'realistic':
-            pass
+
+        if cam_props.camera_type != "realistic":
+            layout.row().prop(cam_props, "frame_ratio", text="Frame Ratio")
+            layout.row().prop(cam_props, "screen_window", text="Screen Window")
+            
+            if cam_props.camera_type != "environment":
+                layout.row().prop(cam_props, "lens_radius", text="Lens Radius")
+                layout.row().prop(cam_props, "focal_distance", text="Focal Distance")
+
+            if cam_props.camera_type == "perspective":
+                layout.row().prop(cam_props, "fov", text="FOV")
+
+        else:
+            layout.row().prop(cam_props, "lens_file", text="Lens File")
+            layout.row().prop(cam_props, "aperture_diameter", text="Aperture Diameter")
+            layout.row().prop(cam_props, "focus_distance", text="Focus Distance")
+            layout.row().prop(cam_props, "simple_weighting", text="Simple Weighting")
 
 
 class PBRT_PT_shutter(bpy.types.Panel):
@@ -131,7 +140,7 @@ class PBRT_PT_shutter(bpy.types.Panel):
         layout = self.layout
         layout.use_property_split = True
 
-        cam_props = context.camera.pbrt
+        cam_props = context.camera.pbrt_camera_props
         layout.row().prop(cam_props, "shutter_open", text="Shutter Open")
         layout.row().prop(cam_props, "shutter_close", text="Shutter Close")
 
@@ -139,7 +148,7 @@ class PBRT_PT_shutter(bpy.types.Panel):
 def register():
     # Register property group
     bpy.utils.register_class(PBRTCameraProperties)
-    bpy.types.Camera.pbrt = bpy.props.PointerProperty(type=PBRTCameraProperties)
+    bpy.types.Camera.pbrt_camera_props = bpy.props.PointerProperty(type=PBRTCameraProperties)
 
     # Register UIs
     bpy.utils.register_class(PBRT_PT_camera)
@@ -148,7 +157,7 @@ def register():
 
 def unregister():
     # Unregister property group
-    del bpy.types.Camera.pbrt
+    del bpy.types.Camera.pbrt_camera_props
     bpy.utils.unregister_class(PBRTCameraProperties)
 
     # Unregister UIs

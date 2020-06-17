@@ -130,3 +130,6 @@ dmypy.json
 
 # Zip packages
 *.zip
+
+# IDE files
+.idea

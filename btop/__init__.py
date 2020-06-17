@@ -16,7 +16,6 @@ bl_info = {
 if "bpy" in locals():
     import importlib
 
-    importlib.reload(properties)
     importlib.reload(ui)
 
 else:
@@ -26,21 +25,17 @@ else:
 def register():
     print('register pbrt')
     from . import render
-    from . import properties
     from . import ui
 
     render.register()
-    properties.register()
     ui.register()
 
 
 def unregister():
     from . import render
-    from . import properties
     from . import ui
 
     render.unregister()
-    properties.unregister()
     ui.unregister()
 
 

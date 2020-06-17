@@ -5,8 +5,6 @@ import bpy
 from ..logger import get_logger
 from ..sceneio import PBRTExporter
 
-logger = get_logger()
-
 
 class PBRTRenderEngine(bpy.types.RenderEngine):
     bl_idname = 'PBRT_RENDER'
@@ -23,7 +21,8 @@ class PBRTRenderEngine(bpy.types.RenderEngine):
         pass
 
     def render(self, depsgraph):
-        logger.debug('render starts')
+        exporter = PBRTExporter()
+        exporter.export("/home/joey/Desktop/scene.pbrt")
 
     def view_update(self, context, depsgraph):
         pass
