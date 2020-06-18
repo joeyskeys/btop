@@ -1,6 +1,7 @@
 
 
 import bpy
+import mathutils
 
 
 class CameraIO(object):
@@ -19,8 +20,20 @@ class CameraIO(object):
 
     def write_to_file(self, writer):
         active_camera = bpy.context.scene.camera
+
+        # Get camera position and orientation
+        camera_matrix = active_camera.matrix_world
+        eye_pos = camera_matrix.translation
+        look_vec = mathutils.Vector((0, 0, -1))
+        look_vec.rotate(camera_matrix.to_3x3())
+        up_vec = mathutils.Vector((0, 1, 0))
+        up_vec.rotate(camera_matrix.to_3x3())
+        orient_line = 'LookAt {} {} {} {} {} {} {} {} {}'.format(*eye_pos.to_tuple(),
+                                                                       *look_vec.to_tuple(),
+                                                                       *up_vec.to_tuple())
+
+        # Get camera properties
         camera_props = active_camera.data.pbrt_camera_props
-        orient_line_comps = []
         camera_line_comps = ['Camera {} float shutteropen {} shutterclose {}'.format(camera_props.camera_type,
                                                                                      camera_props.shutter_open,
                                                                                      camera_props.shutter_close)]
@@ -42,7 +55,8 @@ class CameraIO(object):
             camera_line_comps.append('"float focusdistance" {}'.format(camera_props.focus_distance))
             camera_line_comps.append('"bool simpleweighting" "{}"'.format(camera_props.simple_weighting))
 
-        # todo : write camera lookat
+        # Write out
+        writer.write(orient_line)
         writer.write(' '.join(camera_line_comps))
 
     def read_from_file(self, parser):

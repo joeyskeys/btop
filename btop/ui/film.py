@@ -83,6 +83,14 @@ class PBRT_PT_film(bpy.types.Panel):
         film_props = context.Scene.pbrt_film_props
         layout.row().prop(film_props, "x_resolution", text="Resolution X")
         layout.row().prop(film_props, "y_resolution", text="Resolution Y")
+        layout.row().prop(film_props, "crop_window_x_min", text="Crop Window X Min")
+        layout.row().prop(film_props, "crop_window_x_max", text="Crop Window X Max")
+        layout.row().prop(film_props, "crop_window_y_min", text="Crop Window Y Min")
+        layout.row().prop(film_props, "crop_window_y_max", text="Crop Window Y Max")
+        layout.row().prop(film_props, "scale", text="Scale")
+        layout.row().prop(film_props, "max_sample_luminance", text="Max Sample Luminance")
+        layout.row().prop(film_props, "diagonal", text="Diagonal")
+        layout.row().prop(film_props, "filename", text="Filename")
 
 
 def register():
