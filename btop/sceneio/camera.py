@@ -15,9 +15,6 @@ class CameraIO(object):
         self.shutter_close = None
         self.extra_params = {}
 
-    def read_from_bl(self, scene):
-        pass
-
     def write_to_file(self, writer):
         active_camera = bpy.context.scene.camera
 
@@ -62,5 +59,3 @@ class CameraIO(object):
     def read_from_file(self, parser):
         pass
 
-    def create_in_bl(self, scene):
-        pass
