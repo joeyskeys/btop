@@ -1,0 +1,202 @@
+# todo : license
+
+import bpy
+
+
+class PBRTIntegratorProperties(bpy.types.PropertyGroup):
+    integrator_type: bpy.props.EnumProperty(name="integrator_type",
+                                            items=[
+                                                ("path", "Path", ""),
+                                                ("directlighting", "DirectLighting", ""),
+                                                ("mlt", "MLT", ""),
+                                                ("sppm", "SPPM", ""),
+                                                ("whited", "Whited", "")],
+                                            default="path")
+
+    # Path integrator parameters
+    max_depth: bpy.props.IntProperty(name="max_depth",
+                                     description="Maximum length of a light-carrying path sampled by the integrator",
+                                     default=5,
+                                     soft_max=50,
+                                     min=1)
+
+    # Pixelbound is shared with Directlighting and BDPT integrator
+    pixelbound_x_min: bpy.props.IntProperty(name="pixelbound_x_min",
+                                            description="x min coordination of subset image to sample",
+                                            default=0,
+                                            soft_max=1920,
+                                            min=0)
+
+    pixelbound_x_min: bpy.props.IntProperty(name="pixelbound_x_max",
+                                            description="x max coordination of subset image to sample",
+                                            default=1920,
+                                            soft_max=1920,
+                                            min=1)
+
+    pixelbound_y_min: bpy.props.IntProperty(name="pixelbound_y_min",
+                                            description="y min coordination of subset image to sample",
+                                            default=0,
+                                            soft_max=1080,
+                                            min=0)
+
+    pixelbound_y_max: bpy.props.IntProperty(name="pixelbound_x_max",
+                                            description="y max coordination of subset image to sample",
+                                            default=1080,
+                                            soft_max=1080,
+                                            min=1)
+
+    rr_threshold: bpy.props.FloatProperty(name="rr_threshold",
+                                          description="Determines when Russian roulette is applied to paths",
+                                          default=1,
+                                          max=1,
+                                          min=0)
+
+    light_sample_strategy: bpy.props.EnumProperty(name="light_sample_strategy",
+                                                  items=[
+                                                      ("spatial", "Spatial", ""),
+                                                      ("uniform", "Uniform", ""),
+                                                      ("power", "Power", "")],
+                                                  default="spatial")
+
+    # Direct lighting integrator parameters
+    strategy: bpy.props.EnumProperty(name="The strategy to use for sampling direct lighting",
+                                                         items=[
+                                                             ("all", "All", ""),
+                                                             ("one", "One", "")],
+                                                         default="all"
+                                                         )
+
+    # BDPT integrator parameters
+    visualize_strategies: bpy.props.BoolProperty(name="visualize_strategies",
+                                                 description="If true, an image is saved for each (s,t) bidirectional path generation strategy used by the integrator",
+                                                 default=False)
+
+    visualize_weights:bpy.props.BoolProperty(name="visualize_weights",
+                                             description="If true, an image is saved with the multiple importance sampling weights for each (s,t) bidirectional path generation strategy",
+                                             default=False)
+
+    # MTL integrator parameters
+    bootstrap_samples: bpy.props.IntProperty(name="bootstrap_samples",
+                                             description="Number of samples to take during the bootstrap phase",
+                                             default=100000,
+                                             soft_max=1000000,
+                                             min=1)
+
+    chains: bpy.props.IntProperty(name="chains",
+                                  description="Number of unique Markov chains chains to follow with the Metropolis algorithm",
+                                  default=1000,
+                                  soft_max=100000,
+                                  min=1)
+
+    mutations_per_pixel: bpy.props.IntProperty(name="mutations_per_pixel",
+                                               description="Number of path mutations to apply per pixel in the image",
+                                               default=100,
+                                               soft_max=10000,
+                                               min=1)
+
+    largest_step_probability: bpy.props.FloatProperty(name="largest_step_probability",
+                                                      description="Probability of discarding the current path and generating a new random path",
+                                                      default=0.3,
+                                                      max=1,
+                                                      min=0)
+
+    sigma: bpy.props.FloatProperty(name="sigma",
+                                   description="Standard deviation of the perturbation applied to random samples",
+                                   default=0.01,
+                                   max=1,
+                                   min=0)
+
+    # SPPM integrator parameters
+    iterations: bpy.props.IntProperty(name="iterations",
+                                      description="Total number of iterations of photon shooting from light sources",
+                                      default=64,
+                                      soft_max=128,
+                                      min=1)
+
+    photons_per_iteration: bpy.props.IntProperty(name="photons_per_iteration",
+                                                 description="Number of photons to shoot from light sources in each iteration",
+                                                 default=-1)
+
+    image_write_frequency: bpy.props.IntProperty(name="image_write_frequency",
+                                                 description="Frequency at which to write out the current image",
+                                                 default=2**31,
+                                                 soft_max=2**33,
+                                                 min=1)
+
+    radius: bpy.props.FloatProperty(name="radius",
+                                    description="Initial photon search radius",
+                                    default=1,
+                                    soft_max=10,
+                                    min=0)
+
+
+class PBRT_PT_integrator(bpy.types.Panel):
+    bl_label = "Integrator"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    COMPAT_ENGINES = {'PBRT_RENDER'}
+    bl_context = "render"
+
+    @classmethod
+    def poll(cls, context):
+        renderer = context.scene.render
+        return renderer.engine == 'PBRT_RENDER'
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+
+        integrator_props = context.Scene.pbrt_integrator_props
+        integrator_type = integrator_props.integrator_type
+        layout.row().prop(integrator_props, "integrator_type", text="Integrator Type")
+        layout.row().prop(integrator_props, "max_depth", text="Max Depth")
+
+        if integrator_type in ["path", "directlighting", "bdpt"]:
+            layout.row().prop(integrator_props, "pixelbound_x_min", text="Pixelbound X Min")
+            layout.row().prop(integrator_props, "pixelbound_x_max", text="Pixelbound X Max")
+            layout.row().prop(integrator_props, "pixelbound_y_min", text="Pixelbound Y Min")
+            layout.row().prop(integrator_props, "pixelbound_y_max", text="Pixelbound Y Max")
+
+        if integrator_type in ["path", "bdpt"]:
+            layout.row().prop(integrator_props, "light_sample_strategy", text="Light Sample Strategy")
+
+        if integrator_type == "path":
+            layout.row().prop(integrator_props, "rr_threshold", text="RR Threshold")
+
+        if integrator_type == "directlightingg":
+            layout.row().prop(integrator_props, "strategy", text="Strategy")
+
+        if integrator_type == "bdpt":
+            layout.row().prop(integrator_props, "visualize_strategies", text="Visualize Strategies")
+            layout.row().prop(integrator_props, "visualize_weights", text="Visualize Weights")
+
+        if integrator_type == "mlt":
+            layout.row().prop(integrator_props, "bootstrap_samples", text="Bootstrap Samples")
+            layout.row().prop(integrator_props, "chains", text="Chains")
+            layout.row().prop(integrator_props, "mutations_per_pixel", text="Mutations Per Pixel")
+            layout.row().prop(integrator_props, "largest_step_probability", text="Largest Step Probability")
+            layout.row().prop(integrator_props, "sigma", text="Sigma")
+
+        if integrator_type == "sppm":
+            layout.row().prop(integrator_props, "iterations", text="Iterations")
+            layout.row().prop(integrator_props, "photons_per_iteration", text="Photons Per Iteration")
+            layout.row().prop(integrator_props, "image_write_frequency", text="Image Write Frequency")
+            layout.row().prop(integrator_props, "radius", text="Radius")
+
+
+def register():
+    # Register property group
+    bpy.utils.register_class(PBRTIntegratorProperties)
+    bpy.types.Scene.pbrt_integrator_props = bpy.props.PointerProperty(type=PBRTIntegratorProperties)
+
+    # Register UIs
+    bpy.utils.register_class(PBRT_PT_integrator)
+
+
+def unregister():
+    # Unregister property group
+    del bpy.types.Scene.pbrt_integrator_props
+    bpy.utils.unregister_class(PBRTIntegratorProperties)
+
+    # Unregister UIs
+    bpy.utils.unregister_class(PBRT_PT_integrator)
