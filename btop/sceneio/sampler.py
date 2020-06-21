@@ -13,7 +13,7 @@ class SamplerIO(object):
 
     def write_to_file(self, writer):
         # Get sampler properties
-        sampler_props = bpy.context.scene.data.pbrt_sampler_props
+        sampler_props = bpy.context.scene.pbrt_sampler_props
         sampler_line_comps = ['Sampler "{}"'.format(sampler_props.sampler_type)]
 
         if sampler_props.sampler_type != "stratified":

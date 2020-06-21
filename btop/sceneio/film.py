@@ -16,7 +16,7 @@ class FilmIO(object):
     def write_to_file(self, writer):
 
         render_obj = bpy.context.scene.render
-        film_props = bpy.context.scene.data.pbrt_film_props
+        film_props = bpy.context.scene.pbrt_film_props
 
         # Currently image is the only film type
         # Hard coded here

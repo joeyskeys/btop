@@ -5,6 +5,7 @@ import bpy
 from .camera import CameraIO
 from .film import FilmIO
 from .sampler import SamplerIO
+from .integrator import IntegratorIO
 
 
 class PBRTExporter(object):
@@ -15,7 +16,7 @@ class PBRTExporter(object):
     def __init__(self):
         self.cameraio = CameraIO()
         self.samplerio = SamplerIO()
-        #self.integratorio = IntegratorIO()
+        self.integratorio = IntegratorIO()
         self.filmio = FilmIO()
         #self.sceneio = SceneIO()
 
@@ -25,7 +26,7 @@ class PBRTExporter(object):
         self.cameraio.write_to_file(file_handler)
 
         self.samplerio.write_to_file(file_handler)
-        #self.integratorio.write_to_file(file_handler)
+        self.integratorio.write_to_file(file_handler)
         self.filmio.write_to_file(file_handler)
 
         #self.sceneio.write_to_file(file_handler)
