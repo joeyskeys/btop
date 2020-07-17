@@ -52,7 +52,7 @@ class PBRT_PT_sampler(bpy.types.Panel):
         layout = self.layout
         layout.use_property_split = True
 
-        sampler_props = context.Scene.pbrt_sampler_props
+        sampler_props = context.scene.pbrt_sampler_props
         layout.row().prop(sampler_props, "sampler_type", text="Sampler Type")
         if sampler_props.sampler_type != "stratified":
             layout.row().prop(sampler_props, "pixel_samples", text="Pixel Samples")

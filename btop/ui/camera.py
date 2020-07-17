@@ -9,8 +9,8 @@ class PBRTCameraProperties(bpy.types.PropertyGroup):
                                             ("perspective", "Perspective", ""),
                                             ("orthographic", "Orthographic", ""),
                                             ("environment", "Environment", ""),
-                                            ("realistic", "Realistic", "")],
-
+                                            ("realistic", "Realistic", "")
+                                        ],
                                         default="perspective")
 
     shutter_open: bpy.props.FloatProperty(name="shutter_open",

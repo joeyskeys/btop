@@ -80,7 +80,7 @@ class PBRT_PT_film(bpy.types.Panel):
         layout = self.layout
         layout.use_property_split = True
 
-        film_props = context.Scene.pbrt_film_props
+        film_props = context.scene.pbrt_film_props
         layout.row().prop(film_props, "x_resolution", text="Resolution X")
         layout.row().prop(film_props, "y_resolution", text="Resolution Y")
         layout.row().prop(film_props, "crop_window_x_min", text="Crop Window X Min")
@@ -98,6 +98,7 @@ def register():
     bpy.utils.register_class(PBRTFilmProperties)
     bpy.types.Scene.pbrt_film_props = bpy.props.PointerProperty(type=PBRTFilmProperties)
 
+    # Register UIs
     bpy.utils.register_class(PBRT_PT_film)
 
 

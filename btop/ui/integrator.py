@@ -27,7 +27,7 @@ class PBRTIntegratorProperties(bpy.types.PropertyGroup):
                                             soft_max=1920,
                                             min=0)
 
-    pixelbound_x_min: bpy.props.IntProperty(name="pixelbound_x_max",
+    pixelbound_x_max: bpy.props.IntProperty(name="pixelbound_x_max",
                                             description="x max coordination of subset image to sample",
                                             default=1920,
                                             soft_max=1920,
@@ -118,9 +118,9 @@ class PBRTIntegratorProperties(bpy.types.PropertyGroup):
                                                  default=-1)
 
     image_write_frequency: bpy.props.IntProperty(name="image_write_frequency",
-                                                 description="Frequency at which to write out the current image",
-                                                 default=2**31,
-                                                 soft_max=2**33,
+                                                 description="Frequency at which to write out the current image(power of 2)",
+                                                 default=31,
+                                                 soft_max=64,
                                                  min=1)
 
     radius: bpy.props.FloatProperty(name="radius",
@@ -146,7 +146,7 @@ class PBRT_PT_integrator(bpy.types.Panel):
         layout = self.layout
         layout.use_property_split = True
 
-        integrator_props = context.Scene.pbrt_integrator_props
+        integrator_props = context.scene.pbrt_integrator_props
         integrator_type = integrator_props.integrator_type
         layout.row().prop(integrator_props, "integrator_type", text="Integrator Type")
         layout.row().prop(integrator_props, "max_depth", text="Max Depth")

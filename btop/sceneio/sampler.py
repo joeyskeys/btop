@@ -24,7 +24,7 @@ class SamplerIO(object):
             sampler_line_comps.append('integer ysamples {}'.format(sampler_props.ysamples))
 
         # Write out
-        writer.write(' '.join(sampler_line_comps))
+        writer.write(' '.join(sampler_line_comps) + '\n\n')
 
     def read_from_file(self, parser):
         pass

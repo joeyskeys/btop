@@ -25,18 +25,29 @@ class MeshIO(object):
         scale = matrix.to_scale().to_tuple()
 
         # Get rotation
-        rot = matrix.to_quternion()
-        rotate_angle = 2 * math.acos(rot[0])
-        denom = math.sqrt(1 - rot[0] * rot[0])
-        x_fac = rot[1] / denom
-        y_fac = rot[2] / denom
-        z_fac = rot[3] / denom
+        rot = matrix.to_quaternion()
+        if rot[0] == 0:
+            rotate_angle = math.pi
+            x_fac = rot[1]
+            y_fac = rot[2]
+            z_fac = rot[3]
+        elif rot[0] == 1:
+            rotate_angle = 0
+            x_fac = 0
+            y_fac = 0
+            z_fac = 1
+        else:
+            rotate_angle = 2 * math.acos(rot[0])
+            denom = math.sqrt(1 - rot[0] * rot[0])
+            x_fac = rot[1] / denom
+            y_fac = rot[2] / denom
+            z_fac = rot[3] / denom
         rotate_vec = (x_fac, y_fac, z_fac)
 
         # Write out transformation
-        write_with_indent(indent, 'Translate {} {} {}'.format(*translation))
-        write_with_indent(indent, 'Scale {} {} {}'.format(*scale))
-        write_with_indent(indent, 'Rotate {} {} {} {}'.format(rotate_angle, *rotate_vec))
+        write_with_indent(indent, 'Translate {} {} {}\n'.format(*translation))
+        write_with_indent(indent, 'Scale {} {} {}\n'.format(*scale))
+        write_with_indent(indent, 'Rotate {} {} {} {}\n'.format(rotate_angle, *rotate_vec))
 
         # Get mesh data
         #mesh = meshobj.data
@@ -46,17 +57,17 @@ class MeshIO(object):
         # Triangulate the mesh
         verts, faces = triangulate(meshobj)
 
-        write_with_indent(indent, 'Shape "trianglemesh" ')
+        write_with_indent(indent, 'Shape "trianglemesh"\n')
 
         vert_str = ''
         for vert in verts:
             vert_str += '{} {} {} '.format(*vert.to_tuple())
-        write_with_indent(indent + 1, ('"integer indices [ ' + vert_str[:-1] + ' ]'))
+        write_with_indent(indent + 1, ('"integer indices [ ' + vert_str[:-1] + ' ]\n'))
 
         face_str = ''
         for face in faces:
             face_str += '{} {} {} '.format(*face)
-        write_with_indent(indent + 1, ('"point P" [ ' +  + ' ]'))
+        write_with_indent(indent + 1, ('"point P" [ ' + face_str[:-1] + ' ]\n'))
 
     def read_from_file(self, parser):
         pass

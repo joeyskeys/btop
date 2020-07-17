@@ -18,20 +18,21 @@ class SceneIO(object):
         #self.lightio = LightIO()
 
     def write_to_file(self, writer):
-        writer.write('WorldBegin')
+        writer.write('WorldBegin\n\n')
 
         for object in bpy.data.objects:
-            writer.write('AttributeBegin')
+            writer.write('AttributeBegin\n')
 
             if object.type == 'MESH':
                 # todo : export texture and material first
                 self.meshio.write_to_file(writer, object)
             elif object.type == 'LIGHT':
-                self.lightio.write_to_file(writer, object)
+                #self.lightio.write_to_file(writer, object)
+                pass
 
-            writer.write('AttributeEnd')
+            writer.write('AttributeEnd\n\n')
 
-        writer.write('WorldEnd')
+        writer.write('WorldEnd\n')
 
     def read_from_file(self, parser):
         pass

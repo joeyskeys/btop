@@ -30,16 +30,16 @@ class FilmIO(object):
         crop_win_y_min = film_props.crop_window_y_min
         crop_win_y_max = film_props.crop_window_y_max
         film_line_comps.append('float[4] cropwindow [{} {} {} {}]'.format(crop_win_x_min,
-                                                                          crop_win_x_max,
-                                                                          crop_win_y_min,
-                                                                          crop_win_y_max))
+                                                                            crop_win_x_max,
+                                                                            crop_win_y_min,
+                                                                            crop_win_y_max))
 
         film_line_comps.append('float scale {}'.format(film_props.scale))
         film_line_comps.append('float maxsampleluminance {}'.format(film_props.max_sample_luminance))
         film_line_comps.append('float diagonal {}'.format(film_props.diagonal))
         film_line_comps.append('float filename "{}"'.format(film_props.filename))
 
-        writer.write(' '.join(film_line_comps))
+        writer.write(' '.join(film_line_comps) + '\n\n')
 
     def read_from_file(self, parser):
         pass
