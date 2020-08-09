@@ -23,7 +23,7 @@ class PBRTShaderNode(bpy.types.ShaderNode):
     def create_sockets_from_dict(self):
         for key, value in self.socket_dict.items():
             input_socket = self.inputs.new(value[0], key)
-            if len(value) > 1 and hasattr(input_socket, 'default_value'):
+            if len(value) > 1 and hasattr(input_socket, 'default_value') and value[1] != None:
                 input_socket.default_value = value[1]
 
     def init(self, context):
@@ -237,8 +237,8 @@ class PBRTShaderNodeMixture(PBRTShaderNode):
 
     socket_dict = {
         'amount': ('NodeSocketVector', (0.5, 0.5, 0.5)),
-        'namedmaterial1': ('NodeSocketShader'),
-        'namedmaterial2': ('NodeSocketShader'),
+        'namedmaterial1': ('NodeSocketShader', None),
+        'namedmaterial2': ('NodeSocketShader', None),
     }
 
 
