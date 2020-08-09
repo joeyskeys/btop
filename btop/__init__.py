@@ -26,17 +26,21 @@ def register():
     print('register pbrt')
     from . import render
     from . import ui
+    from . import nodes
 
     render.register()
     ui.register()
+    nodes.register()
 
 
 def unregister():
     from . import render
     from . import ui
+    from . import nodes
 
     render.unregister()
     ui.unregister()
+    nodes.unregister()
 
 
 if __name__ == '__main__':

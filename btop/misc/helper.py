@@ -3,21 +3,41 @@
 import bpy
 
 
-class PropertyMeta(type):
-    def __init__(cls, name, bases, attrs):
-        print('init attrs', attrs)
-        prop_dict = attrs.get('prop_dict', None)
-        assert prop_dict is not None
+class Registry(object):
+    def __init__(self):
+        self.cls_to_register = []
+        self.material_nodes = []
+        self.texture_nodes = []
 
-        # key value pair in prop_dict defines the properties for bpy.type.PropertyGroup sub classes
-        # key is the name of the property
-        # value is a dict like this:
-        # {'name': 'scale',
-        #  'type': 'int',
-        #  'description': 'blabla' (optional)
-        #  'default': '
-        #
-        for key, value in prop_dict.items():
-            attrs[key] = None
+    def add_new_class(self, cls, node_type=None):
+        self.cls_to_register.append(cls)
+
+        # We need the class type bacause cls.__class__.__name__ is not the correct value
+        if node_type == 'material':
+            self.material_nodes.append((cls.class_type, cls.shader_type))
+
+        elif node_type == 'texture':
+            self.texture_nodes.append((cls.class_type, cls.texture_type))
+
+    def register(self):
+        for c in self.cls_to_register:
+            print('register', c)
+            bpy.utils.register_class(c)
+
+    def unregister(self):
+        for c in self.cls_to_register:
+            bpy.utils.unregister_class(c)
 
 
+registry = Registry()
+
+
+class PBRTNodeTypes(object):
+    def __init__(self, node_type=None):
+        self.node_type = node_type
+        self.material_nodes = []
+        self.texture_nodes = []
+
+    def __call__(self, cls):
+        registry.add_new_class(cls, self.node_type)
+        return cls

@@ -2,46 +2,6 @@
 
 import bpy
 
-# It's not quite clever to add material properties this way...
-class PBRTMaterialProperties(bpy.types.PropertyGroup):
-    material_type: bpy.props.EnumProperty(name="material_type",
-                                          items=[
-                                              ("disney", "Disney", ""),
-                                              ("fourier", "Fourier", ""),
-                                              ("glass", "Glass", ""),
-                                              ("hair", "Hair", ""),
-                                              ("kdsubsurface", "KdSubsurface", ""),
-                                              ("matte", "Matte", ""),
-                                              ("mirror", "Mirror", ""),
-                                              ("mix", "Mix", ""),
-                                              ("none", "None", ""),
-                                              ("plastic", "Plastic", ""),
-                                              ("substrate", "Substrate", ""),
-                                              ("subsurface", "Subsurface", ""),
-                                              ("translucent", "Translucent", ""),
-                                              ("uber", "Uber", "")
-                                          ],
-                                          default="disney")
-
-    disney_color:\
-        bpy.props.FloatVectorProperty(name="disney_color",
-                                      description="Base color of the material",
-                                      default=[0.5, 0.5, 0.5],
-                                      min=[0, 0, 0],
-                                      max=[1, 1, 1],
-                                      subtype='COLOR')
-
-    disney_anisotropic:\
-        bpy.props.FloatProperty(name="disney_anisotropic",
-                                description="Controls degree of anisotropy in the specular highlight",
-                                default=0,
-                                min=0,
-                                max=1)
-
-    disney_clearcoat:\
-        bpy.props.FloatProperty(name="disney_clearcoat",
-                                description="")
-
 
 class PBRT_PT_materialslots(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
