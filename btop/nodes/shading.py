@@ -463,6 +463,166 @@ class PBRTShaderNodeImageMap(PBRTShaderNode):
         return data_dict
 
 
+@PBRTNodeTypes('texture')
+class PBRTNodeShaderNodeCheckerboard(PBRTShaderNode):
+    bl_label = 'PBRT Checkerboard Texture'
+
+    class_type = 'PBRTNodeShaderNodeCheckerboard'
+    shader_type = 'checkerboard'
+
+    socket_dict = {
+        'tex1': ('NodeSocketSocket', (1, 1, 1, 1)),
+        'tex2': ('NodeSocketSocket', (0, 0, 0, 1)),
+    }
+
+    dimension = bpy.props.IntProperty(name="dimension",
+                                      description="Sets the dimension of the checkerboard texture",
+                                      default=2,
+                                      max=3,
+                                      min=2)
+
+    aamode = bpy.props.EnumProperty(name="aamode",
+                                    items=[
+                                        ("closedform", "Closedform", ""),
+                                        ("none", "None", ""),
+                                    ],
+                                    default="closedform")
+
+    def draw_buttons(self, context, layout: 'UILayout'):
+        layout.prop(self, 'dimension')
+        if (self.dimension == 2):
+            layout.prop(self, 'aamode')
+        super(PBRTShaderNodeSubsurface, self).draw_buttons(context, layout)
+
+    def get_data_dict(self):
+        data_dict = super(PBRTShaderNodeSubsurface, self).get_data_dict()
+        data_dict['params']['dimension'] = self.dimension
+        data_dict['params']['aamode'] = self.aamode
+        return data_dict
+
+
+@PBRTNodeTypes('texture')
+class PBRTNodeShaderNodeDots(PBRTShaderNode):
+    bl_label = "PBRT Dots Texture"
+
+    class_type = 'PBRTNodeShaderNodeDots'
+    shader_type = 'dots'
+
+    socket_dict = {
+        'inside': ('NodeSocketColor', (1, 1, 1, 1)),
+        'outside': ('NodeSocketColor', (0, 0, 0, 1)),
+    }
+
+
+@PBRTNodeTypes('texture')
+class PBRTNodeShaderNodeFbm(PBRTShaderNode):
+    bl_label = 'PBRT Fbm Texture'
+
+    class_type = 'PBRTNodeShaderNodeFbm'
+    shader_tpe = 'fbm'
+
+    octaves = bpy.props.IntProperty(name="octaves",
+                                    description="The maximum number of octaves of noise to use in spectral synthesis",
+                                    default=8,
+                                    soft_max=20,
+                                    min=1)
+
+    roughness = bpy.props.FloatProperty(name="roughness",
+                                        description="The 'bumpiness' of the resulting texture",
+                                        default=0.5,
+                                        max=1,
+                                        min=0)
+
+    def draw_buttons(self, context, layout: 'UILayout'):
+        layout.prop(self, 'octaves')
+        layout.prop(self, 'roughness')
+        super(PBRTShaderNodeSubsurface, self).draw_buttons(context, layout)
+
+    def get_data_dict(self):
+        data_dict = super(PBRTShaderNodeSubsurface, self).get_data_dict()
+        data_dict['params']['octaves'] = self.octaves
+        data_dict['params']['roughness'] = self.roughness
+        return data_dict
+
+
+@PBRTNodeTypes('texture')
+class PBRTNodeShaderNodeWrinkled(PBRTShaderNode):
+    bl_label = 'PBRT Wrinkled Texture'
+
+    class_type = 'PBRTNodeShaderNodeWrinkled'
+    shader_tpe = 'wrinkled'
+
+    octaves = bpy.props.IntProperty(name="octaves",
+                                    description="The maximum number of octaves of noise to use in spectral synthesis",
+                                    default=8,
+                                    soft_max=20,
+                                    min=1)
+
+    roughness = bpy.props.FloatProperty(name="roughness",
+                                        description="The 'bumpiness' of the resulting texture",
+                                        default=0.5,
+                                        max=1,
+                                        min=0)
+
+    def draw_buttons(self, context, layout: 'UILayout'):
+        layout.prop(self, 'octaves')
+        layout.prop(self, 'roughness')
+        super(PBRTShaderNodeSubsurface, self).draw_buttons(context, layout)
+
+    def get_data_dict(self):
+        data_dict = super(PBRTShaderNodeSubsurface, self).get_data_dict()
+        data_dict['params']['octaves'] = self.octaves
+        data_dict['params']['roughness'] = self.roughness
+        return data_dict
+
+
+@PBRTNodeTypes('texture')
+class PBRTNodeShaderNodeMarble(PBRTShaderNode):
+    bl_label = 'PBRT Marble Texture'
+
+    class_type = 'PBRTNodeShaderNodeMarble'
+    shader_type = 'marble'
+
+    octaves = bpy.props.IntProperty(name="octaves",
+                                    description="The maximum number of octaves of noise to use in spectral synthesis",
+                                    default=8,
+                                    soft_max=20,
+                                    min=1)
+
+    roughness = bpy.props.FloatProperty(name="roughness",
+                                        description="The 'bumpiness' of the resulting texture",
+                                        default=0.5,
+                                        max=1,
+                                        min=0)
+
+    scale = bpy.props.FloatProperty(name="scale",
+                                    description="A scaling factor to apply to the noise function inputs",
+                                    default=1,
+                                    soft_max=20,
+                                    min=0)
+
+    variation = bpy.props.FloatProperty(name="variation",
+                                        description="A scaling factor to apply to the noise function output",
+                                        default=0.2,
+                                        soft_max=5,
+                                        min=0)
+
+    def draw_buttons(self, context, layout: 'UILayout'):
+        layout.prop(self, 'octaves')
+        layout.prop(self, 'roughness')
+        layout.prop(self, 'scale')
+        layout.prop(self, 'variation')
+        super(PBRTShaderNodeSubsurface, self).draw_buttons(context, layout)
+
+    def get_data_dict(self):
+        data_dict = super(PBRTShaderNodeSubsurface, self).get_data_dict()
+        data_dict['params']['octaves'] = self.octaves
+        data_dict['params']['roughness'] = self.roughness
+        data_dict['params']['scale'] = self.scale
+        data_dict['params']['variation'] = self.variation
+        return data_dict
+
+
 # Register all the shading nodes
 def register():
     registry.register()
