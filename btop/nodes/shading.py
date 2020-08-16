@@ -6,6 +6,17 @@ from ..misc import PBRTNodeTypes
 from ..misc import registry
 
 
+socket_type_mapping = {
+    'RGBA': 'spectrum',
+    'VALUE': 'float',
+}
+
+attribute_type_mapping = {
+    'RGBA': 'rgb',
+    'VALUE': 'float',
+}
+
+
 class PBRTShaderNode(bpy.types.ShaderNode):
     """
     Base class for PBRT shading nodes
@@ -30,6 +41,7 @@ class PBRTShaderNode(bpy.types.ShaderNode):
         self.create_sockets_from_dict()
         self.outputs.new('NodeSocketShader', 'Shader')
 
+    # This interface returns a general json dict and may serve for other purpose later.
     def get_data_dict(self):
         param_dict = {
             'name': self.name,
@@ -48,12 +60,56 @@ class PBRTShaderNode(bpy.types.ShaderNode):
                     sock_value = '{}'.format(sock.default_value)
                 # color type socket
                 elif sock.type == 'RGBA':
-                    rgba_v = sock.default_value
-                    sock_value = '[{} {} {}]'.format(rgba_v[0], rgba_v[1], rgba_v[2])
+                    rgba_value = sock.default_value
+                    sock_value = '[{} {} {}]'.format(rgba_value[0], rgba_value[1], rgba_value[2])
                 else:
                     raise Exception('socket type unsupported : {}'.format(sock.type))
+                param_dict['params'][key] = sock_value
 
         return param_dict
+
+    # The export line components interface in case some attributes is not defined as a socket
+    # Shader nodes containing property attributes need to override this function
+    def export_comps(self, file_writer):
+        shader_line_comps = [self.category]
+
+        # Texture nodes need name and type attribute
+        if self.category == 'Texture':
+            shader_line_comps.append('"{}"'.format(self.name))
+            # Determine texture node type by connected upstream socket type
+            upstream_socket_type = self.outputs['Shader'].links[0].to_socket.type
+            shader_line_comps.append('"{}"'.format(socket_type_mapping[upstream_socket_type]))
+
+        shader_line_comps.append('"{}"'.format(self.shader_type))
+
+        for key, value in self.socket_dict.items():
+            sock = self.inputs[key]
+
+            # If socket is linked, recursively export the node
+            if sock.is_linked:
+                from_node = sock.links[0].from_node
+                from_node.export(file_writer)
+                shader_line_comps.append('"texture {}" "{}"'.format(key, from_node.name))
+
+            # Else write out the attribute value
+            else:
+                # float type socket
+                if sock.type == 'VALUE':
+                    sock_value = '[{}]'.format(sock.default_value)
+                # color type socket
+                elif sock.type == 'RGBA':
+                    rgba_value = sock.default_value
+                    sock_value = '[{} {} {}]'.format(rgba_value[0], rgba_value[1], rgba_value[2])
+                else:
+                    raise Exception("socket type unsupported : {}".format(sock.type))
+                shader_line_comps.append('"{} {}" {}'.format(attribute_type_mapping[sock.type], key, sock_value))
+
+        return shader_line_comps
+
+    # The actual export interface
+    def export(self, indent, file_writer):
+        comps = self.export_comps(file_writer)
+        file_writer.write(indent + ' '.join(comps))
 
 
 class PBRTShaderNodeWithRemapRoughness(PBRTShaderNode):
@@ -68,6 +124,11 @@ class PBRTShaderNodeWithRemapRoughness(PBRTShaderNode):
         param_dict = super().get_data_dict()
         param_dict['params'].update({'remaproughness': self.remaproughness})
         return param_dict
+
+    def export_comps(self, file_writer):
+        comps = super().export_comps(file_writer)
+        comps.append('"{} {}" "{}"'.format('bool', 'remaproughness', 'true' if self.remaproughness else 'false'))
+        return comps
 
 
 @PBRTNodeTypes('material')
@@ -111,6 +172,11 @@ class PBRTShaderNodeDisney(PBRTShaderNode):
         param_dict['params'].update({'thin': self.thin})
         return param_dict
 
+    def export_comps(self, file_writer):
+        comps = super().export_comps(file_writer)
+        comps.append('"{} {}" "{}"'.format('bool', 'thin', 'true' if self.thin else 'false'))
+        return comps
+
 
 @PBRTNodeTypes('material')
 class PBRTShaderNodeFourier(PBRTShaderNode):
@@ -132,6 +198,11 @@ class PBRTShaderNodeFourier(PBRTShaderNode):
             'type': self.shader_type,
             'params': {'bsdffile': self.bsdffile}
         }
+
+    def export_comps(self, file_writer):
+        comps = super().export_comps(file_writer)
+        comps.append('"{} {}" "{}"'.format('string', 'bsdffile', self.bsdffile))
+        return comps
 
 
 @PBRTNodeTypes('material')
@@ -309,6 +380,12 @@ class PBRTShaderNodeSubsurface(PBRTShaderNodeWithRemapRoughness):
         data_dict['params']['scale'] = self.scale
         return data_dict
 
+    def export_comps(self, file_writer):
+        comps = super().export_comps(file_writer)
+        comps.append('"{} {}" "{}"'.format('string', 'name', self.coefficient_name))
+        comps.append('"{} {}" {}'.format('float scale', self.scale))
+        return comps
+
 
 @PBRTNodeTypes('material')
 class PBRTShaderNodeTranslucent(PBRTShaderNodeWithRemapRoughness):
@@ -439,9 +516,9 @@ class PBRTShaderNodeImageMap(PBRTShaderNode):
                                     soft_max=10,
                                     min=0)
 
-    gamma = bpy.props.FloatProperty(name="gamma",
-                                    description="Indicates whether texel values should be converted from sRGB gamma space to linear space",
-                                    default=False)
+    gamma = bpy.props.BoolProperty(name="gamma",
+                                   description="Indicates whether texel values should be converted from sRGB gamma space to linear space",
+                                   default=False)
 
     def draw_buttons(self, context, layout: 'UILayout'):
         layout.prop(self, 'filename')
@@ -461,6 +538,16 @@ class PBRTShaderNodeImageMap(PBRTShaderNode):
         data_dict['params']['scale'] = self.scale
         data_dict['params']['gamma'] = self.gamma
         return data_dict
+
+    def export_comps(self, file_writer):
+        comps = super().export_comps(file_writer)
+        comps.append('"{} {}" "{}"'.format('string', 'filename', self.filename))
+        comps.append('"{} {}" "{}"'.format('string', 'wrap', self.wrap))
+        comps.append('"{} {}" {}'.format('float', 'maxanisotropy', self.maxanisotropy))
+        comps.append('"{} {}" "{}"'.format('bool', 'trilinear', 'true' if self.trilinear else 'false'))
+        comps.append('"{} {}" {}'.format('float', 'scale', self.scale))
+        comps.append('"{} {}" "{}"'.format('bool', 'gamma', self.gamma))
+        return comps
 
 
 @PBRTNodeTypes('texture')
@@ -499,6 +586,12 @@ class PBRTNodeShaderNodeCheckerboard(PBRTShaderNode):
         data_dict['params']['dimension'] = self.dimension
         data_dict['params']['aamode'] = self.aamode
         return data_dict
+
+    def export_comps(self, file_writer):
+        comps = super().export_comps(file_writer)
+        comps.append('"{} {}" {}'.format('integer', 'dimension', self.dimension))
+        comps.append('"{} {}" "{}"'.format('string', 'aamode', self.aamode))
+        return comps
 
 
 @PBRTNodeTypes('texture')
@@ -544,6 +637,12 @@ class PBRTNodeShaderNodeFbm(PBRTShaderNode):
         data_dict['params']['roughness'] = self.roughness
         return data_dict
 
+    def export_comps(self, file_writer):
+        comps = super().export_comps(file_writer)
+        comps.append('"{} {}" {}'.format('integer', 'octaves', self.octaves))
+        comps.append('"{} {}" {}'.format('float', 'roughness', self.roughness))
+        return comps
+
 
 @PBRTNodeTypes('texture')
 class PBRTNodeShaderNodeWrinkled(PBRTShaderNode):
@@ -574,6 +673,12 @@ class PBRTNodeShaderNodeWrinkled(PBRTShaderNode):
         data_dict['params']['octaves'] = self.octaves
         data_dict['params']['roughness'] = self.roughness
         return data_dict
+
+    def export_comps(self, file_writer):
+        comps = super().export_comps(file_writer)
+        comps.append('"{} {}" {}'.format('integer', 'octaves', self.octaves))
+        comps.append('"{} {}" {}'.format('float', 'roughness', self.roughness))
+        return comps
 
 
 @PBRTNodeTypes('texture')
@@ -621,6 +726,14 @@ class PBRTNodeShaderNodeMarble(PBRTShaderNode):
         data_dict['params']['scale'] = self.scale
         data_dict['params']['variation'] = self.variation
         return data_dict
+
+    def export_comps(self, file_writer):
+        comps = super().export_comps(file_writer)
+        comps.append('"{} {}" {}'.format('integer', 'octaves', self.octaves))
+        comps.append('"{} {}" {}'.format('float', 'roughness', self.roughness))
+        comps.append('"{} {}" {}'.format('float', 'scale', self.scale))
+        comps.append('"{} {}" {}'.format('float', 'variation', self.variation))
+        return comps
 
 
 # Register all the shading nodes
