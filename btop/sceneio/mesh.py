@@ -6,6 +6,7 @@ import math
 
 from ..misc import triangulate
 
+
 class MeshIO(object):
     """
 
