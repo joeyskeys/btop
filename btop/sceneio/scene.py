@@ -4,7 +4,7 @@ import bpy
 
 from .mesh import MeshIO
 from .material import MaterialIO
-#from .light import LightIO
+from .light import LightIO
 
 
 class SceneIO(object):
@@ -15,10 +15,13 @@ class SceneIO(object):
     def __init__(self):
         self.meshio = MeshIO()
         self.materialio = MaterialIO()
-        #self.lightio = LightIO()
+        self.lightio = LightIO()
 
     def write_to_file(self, writer):
         writer.write('WorldBegin\n\n')
+
+        # Light should be written in the world block
+        self.lightio.write_to_file(writer)
 
         for object in bpy.data.objects:
             writer.write('AttributeBegin\n')
@@ -26,9 +29,6 @@ class SceneIO(object):
             if object.type == 'MESH':
                 self.materialio.write_to_file(writer, object)
                 self.meshio.write_to_file(writer, object)
-            elif object.type == 'LIGHT':
-                #self.lightio.write_to_file(writer, object)
-                pass
 
             writer.write('AttributeEnd\n\n')
 
