@@ -34,5 +34,6 @@ class MaterialIO(object):
         # Export from the shader node
         if hasattr(shader, 'export'):
             shader.export(indent, writer)
+
         else:
             raise Exception('None pbrt material assigned : %s' %shader.name)

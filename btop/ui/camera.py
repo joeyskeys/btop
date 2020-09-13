@@ -35,27 +35,27 @@ class PBRTCameraProperties(bpy.types.PropertyGroup):
     # For persp, ortho, env
     screen_window_x_min: bpy.props.FloatProperty(name="screen_window_x_min",
                                                  description="The bounds of the film plane in screen space",
-                                                 default=0,
+                                                 default=-1,
                                                  max=1,
-                                                 min=0.1)
+                                                 min=-1)
 
     screen_window_x_max: bpy.props.FloatProperty(name="screen_window_x_max",
                                                  description="The bounds of the film plane in screen space",
                                                  default=1,
                                                  max=1,
-                                                 min=0.1)
+                                                 min=-1)
 
     screen_window_y_min: bpy.props.FloatProperty(name="screen_window_y_min",
                                                  description="The bounds of the film plane in screen space",
-                                                 default=0,
+                                                 default=-1,
                                                  max=1,
-                                                 min=0.1)
+                                                 min=-1)
 
     screen_window_y_max: bpy.props.FloatProperty(name="screen_window_y_max",
                                                  description="The bounds of the film plane in screen space",
                                                  default=1,
                                                  max=1,
-                                                 min=0.1)
+                                                 min=-1)
 
     # For persp, ortho
     lens_radius: bpy.props.FloatProperty(name="lens_radius",

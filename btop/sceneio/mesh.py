@@ -50,11 +50,6 @@ class MeshIO(object):
         write_with_indent(indent, 'Scale {} {} {}\n'.format(*scale))
         write_with_indent(indent, 'Rotate {} {} {} {}\n'.format(rotate_angle, *rotate_vec))
 
-        # Get mesh data
-        #mesh = meshobj.data
-        #verts = mesh.vertices
-        #faces = mesh.polygons
-
         # Triangulate the mesh
         verts, faces = triangulate(meshobj)
 
@@ -63,12 +58,13 @@ class MeshIO(object):
         vert_str = ''
         for vert in verts:
             vert_str += '{} {} {} '.format(*vert.to_tuple())
-        write_with_indent(indent + 1, ('"integer indices" [ ' + vert_str[:-1] + ' ]\n'))
+            #vert_str += '{} {} {} '.format(vert.x, vert.y, -vert.z)
+        write_with_indent(indent + 1, ('"point P" [ ' + vert_str[:-1] + ' ]\n'))
 
         face_str = ''
         for face in faces:
             face_str += '{} {} {} '.format(*face)
-        write_with_indent(indent + 1, ('"point P" [ ' + face_str[:-1] + ' ]\n'))
+        write_with_indent(indent + 1, ('"integer indices" [ ' + face_str[:-1] + ' ]\n'))
 
     def read_from_file(self, parser):
         pass

@@ -113,7 +113,7 @@ class PBRTShaderNode(bpy.types.ShaderNode):
     # The actual export interface
     def export(self, indent, file_writer):
         comps = self.export_comps(file_writer)
-        file_writer.write(indent * '\t' + ' '.join(comps))
+        file_writer.write(indent * '\t' + ' '.join(comps) + '\n')
 
 
 class PBRTShaderNodeWithRemapRoughness(PBRTShaderNode):
