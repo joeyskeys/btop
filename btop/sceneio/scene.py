@@ -24,13 +24,12 @@ class SceneIO(object):
         self.lightio.write_to_file(writer)
 
         for object in bpy.data.objects:
-            writer.write('AttributeBegin\n')
 
             if object.type == 'MESH':
+                writer.write('AttributeBegin\n')
                 self.materialio.write_to_file(writer, object)
                 self.meshio.write_to_file(writer, object)
-
-            writer.write('AttributeEnd\n\n')
+                writer.write('AttributeEnd\n\n')
 
         writer.write('WorldEnd\n')
 

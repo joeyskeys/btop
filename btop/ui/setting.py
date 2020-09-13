@@ -1,17 +1,28 @@
 # todo : license
 
+import os
+import shutil
+
 import bpy
+
+
+def find_pbrt_binary():
+    pass
+
+
+def find_home_directory():
+    pass
 
 
 class PBRTSettingProperties(bpy.types.PropertyGroup):
     pbrt_location: bpy.props.StringProperty(name="pbrt_location",
                                             description="PBRT executable location",
-                                            default="",
+                                            default=shutil.which('pbrt') or '',
                                             subtype='FILE_PATH')
 
     pbrt_cache_folder: bpy.props.StringProperty(name="pbrt_cache_folder",
                                                 description="PBRT cache folder",
-                                                default="",
+                                                default=os.path.join(os.path.expanduser("~"), 'pbrt_scene'),
                                                 subtype='FILE_PATH')
 
 

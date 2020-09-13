@@ -14,6 +14,7 @@ socket_type_mapping = {
 attribute_type_mapping = {
     'RGBA': 'rgb',
     'VALUE': 'float',
+    'VECTOR': 'rgb'
 }
 
 
@@ -100,6 +101,9 @@ class PBRTShaderNode(bpy.types.ShaderNode):
                 elif sock.type == 'RGBA':
                     rgba_value = sock.default_value
                     sock_value = '[{} {} {}]'.format(rgba_value[0], rgba_value[1], rgba_value[2])
+                elif sock.type == 'VECTOR':
+                    vec_value = sock.default_value
+                    sock_value = '[{} {} {}]'.format(vec_value[0], vec_value[1], vec_value[2])
                 else:
                     raise Exception("socket type unsupported : {}".format(sock.type))
                 shader_line_comps.append('"{} {}" {}'.format(attribute_type_mapping[sock.type], key, sock_value))
@@ -612,7 +616,7 @@ class PBRTNodeShaderNodeFbm(PBRTShaderNode):
     bl_label = 'PBRT Fbm Texture'
 
     class_type = 'PBRTNodeShaderNodeFbm'
-    shader_tpe = 'fbm'
+    shader_type = 'fbm'
 
     octaves = bpy.props.IntProperty(name="octaves",
                                     description="The maximum number of octaves of noise to use in spectral synthesis",
@@ -649,7 +653,7 @@ class PBRTNodeShaderNodeWrinkled(PBRTShaderNode):
     bl_label = 'PBRT Wrinkled Texture'
 
     class_type = 'PBRTNodeShaderNodeWrinkled'
-    shader_tpe = 'wrinkled'
+    shader_type = 'wrinkled'
 
     octaves = bpy.props.IntProperty(name="octaves",
                                     description="The maximum number of octaves of noise to use in spectral synthesis",

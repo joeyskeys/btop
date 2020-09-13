@@ -85,7 +85,7 @@ class PBRT_PT_materialdetails(bpy.types.Panel):
 
 def register():
     # Register property group
-    bpy.utils.register_class()
+    #bpy.utils.register_class()
 
     # Register UIs
     bpy.utils.register_class(PBRT_PT_materialslots)
@@ -93,7 +93,7 @@ def register():
 
 def unregister():
     # Unregister property group
-    bpy.utils.unregister_class()
+    #bpy.utils.unregister_class()
 
     # Unregister UIs
     bpy.utils.unregister_class(PBRT_PT_materialslots)

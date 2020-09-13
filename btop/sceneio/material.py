@@ -32,4 +32,7 @@ class MaterialIO(object):
         # Get PBRT shader node from output surface socket
         shader = output_node.inputs['Surface'].links[0].from_node
         # Export from the shader node
-        shader.export(indent, writer)
+        if hasattr(shader, 'export'):
+            shader.export(indent, writer)
+        else:
+            raise Exception('None pbrt material assigned : %s' %shader.name)

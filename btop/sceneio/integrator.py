@@ -24,8 +24,8 @@ class IntegratorIO(object):
             p_y_max = integrator_props.pixelbound_y_max
 
             film_props = bpy.context.scene.pbrt_film_props
-            film_x_resolution = film_props.resolution_x
-            film_y_resolution = film_props.resolution_y
+            film_x_resolution = film_props.x_resolution
+            film_y_resolution = film_props.y_resolution
 
             integrator_line_comps.append('integer[4] pixelbounds [{} {} {} {}]'.format(p_x_min,
                                                                                        min(p_x_max, film_x_resolution),
@@ -58,7 +58,7 @@ class IntegratorIO(object):
             integrator_line_comps.append('imagewritefrequency {}'.format(integrator_props.image_write_frequency))
             integrator_line_comps.append('radius {}'.format(integrator_props.radius))
 
-        writer.write(' '.join(integrator_line_comps) + '\n')
+        writer.write(' '.join(integrator_line_comps) + '\n\n')
 
     def read_from_file(self, parser):
         pass

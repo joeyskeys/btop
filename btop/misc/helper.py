@@ -18,7 +18,7 @@ class Registry(object):
             cls.category = 'Material'
 
         elif node_type == 'texture':
-            self.texture_nodes.append((cls.class_type, cls.texture_type))
+            self.texture_nodes.append((cls.class_type, cls.shader_type))
             cls.category = 'Texture'
 
         else:
