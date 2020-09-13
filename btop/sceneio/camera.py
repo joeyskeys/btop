@@ -32,13 +32,16 @@ class CameraIO(object):
 
         # Get camera properties
         camera_props = active_camera.data.pbrt_camera_props
-        camera_line_comps = ['Camera {} float shutteropen {} shutterclose {}'.format(camera_props.camera_type,
+        camera_line_comps = ['Camera "{}" "float shutteropen" {} "float shutterclose" {}'.format(camera_props.camera_type,
                                                                                        camera_props.shutter_open,
                                                                                        camera_props.shutter_close)]
 
         if camera_props.camera_type != "realistic":
             camera_line_comps.append('"float frameratio" {}'.format(camera_props.frame_ratio))
-            camera_line_comps.append('"float screenwindow" {}'.format(camera_props.screen_window))
+            camera_line_comps.append('"float screenwindow" [{} {} {} {}]'.format(camera_props.screen_window_x_min,
+                                                                                 camera_props.screen_window_x_max,
+                                                                                 camera_props.screen_window_y_min,
+                                                                                 camera_props.screen_window_y_max))
 
             if camera_props.camera_type != "environment":
                 camera_line_comps.append('"float lensradius" {}'.format(camera_props.lens_radius))

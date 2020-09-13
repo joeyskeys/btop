@@ -63,7 +63,7 @@ class MeshIO(object):
         vert_str = ''
         for vert in verts:
             vert_str += '{} {} {} '.format(*vert.to_tuple())
-        write_with_indent(indent + 1, ('"integer indices [ ' + vert_str[:-1] + ' ]\n'))
+        write_with_indent(indent + 1, ('"integer indices" [ ' + vert_str[:-1] + ' ]\n'))
 
         face_str = ''
         for face in faces:
