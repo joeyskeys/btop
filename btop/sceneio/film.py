@@ -36,7 +36,7 @@ class FilmIO(object):
         film_line_comps.append('"float scale" {}'.format(film_props.scale))
         film_line_comps.append('"float maxsampleluminance" {}'.format(film_props.max_sample_luminance))
         film_line_comps.append('"float diagonal" {}'.format(film_props.diagonal))
-        film_line_comps.append('"string filename" "{}"'.format(film_props.filename))
+        #film_line_comps.append('"string filename" "{}"'.format(film_props.filename))
 
         writer.write(' '.join(film_line_comps) + '\n\n')
 
