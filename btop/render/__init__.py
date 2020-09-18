@@ -32,6 +32,10 @@ class PBRTRenderEngine(bpy.types.RenderEngine):
         cache_filepath = os.path.join(setting_props.pbrt_cache_folder, filename.replace('.blend', '.pbrt'))
         outfile = os.path.join(setting_props.pbrt_cache_folder, filename.replace('.blend', '.exr'))
 
+        film_props = bpy.context.scene.pbrt_film_props
+        x_resolution = film_props.x_resolution
+        y_resolution = film_props.y_resolution
+
         #exporter.export("/home/joey/Desktop/scene.pbrt")
         exporter.export(cache_filepath)
 
@@ -40,6 +44,12 @@ class PBRTRenderEngine(bpy.types.RenderEngine):
             cmd_comps = [pbrt_executable, '--outfile', outfile, cache_filepath]
             print('command is : ', ' '.join(cmd_comps))
             os.system(' '.join(cmd_comps))
+
+            # Load rendered picture and display it in the viewport
+            result = self.begin_result(0, 0, x_resolution, y_resolution)
+            layer = result.layers[0]
+            layer.load_from_file(outfile)
+
         except Exception as e:
             print('execute pbrt command failed:\n', e)
 
