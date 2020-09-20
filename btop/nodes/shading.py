@@ -104,7 +104,7 @@ class PBRTShaderNode(bpy.types.ShaderNode):
             # If socket is linked, recursively export the node
             if sock.is_linked:
                 from_node = sock.links[0].from_node
-                from_node.export(file_writer)
+                from_node.export(0, file_writer)
                 shader_line_comps.append('"texture {}" "{}"'.format(key, from_node.name))
 
             # Else write out the attribute value
