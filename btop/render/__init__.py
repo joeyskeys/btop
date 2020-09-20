@@ -16,11 +16,11 @@
 # THE SOFTWARE.
 
 import os
-import subprocess
 
 import bpy
 
 from ..sceneio import PBRTExporter
+from ..ui.preferences import get_pref
 
 
 class PBRTRenderEngine(bpy.types.RenderEngine):
@@ -40,17 +40,23 @@ class PBRTRenderEngine(bpy.types.RenderEngine):
     def render(self, depsgraph):
         exporter = PBRTExporter()
 
-        setting_props = bpy.context.scene.pbrt_setting_props
-        filename = os.path.basename(bpy.data.filepath) or 'tmp.blend'
-        pbrt_executable = setting_props.pbrt_location
-        cache_filepath = os.path.join(setting_props.pbrt_cache_folder, filename.replace('.blend', '.pbrt'))
-        outfile = os.path.join(setting_props.pbrt_cache_folder, filename.replace('.blend', '.exr'))
+        # Get executable from preference
+        pref = get_pref()
+        pbrt_executable = pref.pbrt_location
+        cache_folder = pref.pbrt_cache_folder
 
+        # Setup output file name
+        # todo : decide output file type with an user option
+        filename = os.path.basename(bpy.data.filepath) or 'tmp.blend'
+        cache_filepath = os.path.join(cache_folder, filename.replace('.blend', '.pbrt'))
+        outfile = os.path.join(cache_folder, filename.replace('.blend', '.exr'))
+
+        # Get film resolution
         film_props = bpy.context.scene.pbrt_film_props
         x_resolution = film_props.x_resolution
         y_resolution = film_props.y_resolution
 
-        #exporter.export("/home/joey/Desktop/scene.pbrt")
+        # Export pbrt cache file
         exporter.export(cache_filepath)
 
         try:

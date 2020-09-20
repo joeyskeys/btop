@@ -21,14 +21,12 @@ import shutil
 import bpy
 
 
-"""
-UIs defined here are moved to addon preference, take a look at ui/preference.py file.
-By doing this, we no longer have to setup pbrt executable path every time.
-This file is reserved for future renderer setting.
-"""
+addon_name = os.path.basename(os.path.dirname(os.path.dirname(__file__)))
 
 
-class PBRTSettingProperties(bpy.types.PropertyGroup):
+class PBRTPreferences(bpy.types.AddonPreferences):
+    bl_idname = addon_name
+
     pbrt_location: bpy.props.StringProperty(name="pbrt_location",
                                             description="PBRT executable location",
                                             default=shutil.which('pbrt') or '',
@@ -39,41 +37,22 @@ class PBRTSettingProperties(bpy.types.PropertyGroup):
                                                 default=os.path.join(os.path.expanduser("~"), 'pbrt_scene'),
                                                 subtype='FILE_PATH')
 
-
-class PBRT_PT_setting(bpy.types.Panel):
-    bl_label = "Setting"
-    bl_space_type = "PROPERTIES"
-    bl_region_type = "WINDOW"
-    COMPAT_ENGINES = {'PBRT_RENDER'}
-    bl_context = 'render'
-
-    @classmethod
-    def poll(cls, context):
-        renderer = context.scene.render
-        return renderer.engine == 'PBRT_RENDER'
-
     def draw(self, context):
         layout = self.layout
-        layout.use_property_split = True
 
-        setting_props = context.scene.pbrt_setting_props
-        layout.row().prop(setting_props, "pbrt_location", text="PBRT Location")
-        layout.row().prop(setting_props, "pbrt_cache_folder", text="Cache Folder")
+        layout.row().prop(self, 'pbrt_location', text="PBRT location")
+        layout.row().prop(self, 'pbrt_cache_folder', text="Cache Folder")
+
+
+def get_pref():
+    return bpy.context.preferences.addons[addon_name].preferences
 
 
 def register():
-    # Register property group
-    bpy.utils.register_class(PBRTSettingProperties)
-    bpy.types.Scene.pbrt_setting_props = bpy.props.PointerProperty(type=PBRTSettingProperties)
-
     # Register UIs
-    bpy.utils.register_class(PBRT_PT_setting)
+    bpy.utils.register_class(PBRTPreferences)
 
 
 def unregister():
-    # Unregister property group
-    del bpy.types.Scene.pbrt_setting_props
-    bpy.utils.unregister_class(PBRTSettingProperties)
-
     # Unregister UIs
-    bpy.utils.unregister_class(PBRT_PT_setting)
+    bpy.utils.unregister_class(PBRTPreferences)
