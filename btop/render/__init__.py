@@ -5,7 +5,6 @@ import subprocess
 
 import bpy
 
-from ..logger import get_logger
 from ..sceneio import PBRTExporter
 
 
@@ -49,6 +48,7 @@ class PBRTRenderEngine(bpy.types.RenderEngine):
             result = self.begin_result(0, 0, x_resolution, y_resolution)
             layer = result.layers[0]
             layer.load_from_file(outfile)
+            self.end_result(result)
 
         except Exception as e:
             print('execute pbrt command failed:\n', e)

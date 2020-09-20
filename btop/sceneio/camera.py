@@ -18,6 +18,9 @@ class CameraIO(object):
     def write_to_file(self, writer):
         active_camera = bpy.context.scene.camera
 
+        # Add scale to convert right hand system to left hand system
+        scale_line = 'Scale -1 1 1'
+
         # Get camera position and orientation
         camera_matrix = active_camera.matrix_world
         eye_pos = camera_matrix.translation
@@ -57,6 +60,7 @@ class CameraIO(object):
             camera_line_comps.append('"bool simpleweighting" "{}"'.format(camera_props.simple_weighting))
 
         # Write out
+        writer.write(scale_line + '\n')
         writer.write(orient_line + '\n')
         writer.write(' '.join(camera_line_comps) + '\n\n')
 
