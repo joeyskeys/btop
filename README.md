@@ -22,6 +22,8 @@ Please note that this addon doesn't provide pbrt executable by itself, it just c
   ![world options](https://github.com/joeyskeys/btop/tree/master/resources/world_option.png)
   - Materials
   ![materials](https://github.com/joeyskeys/btop/tree/master/resources/material.png)
+  - Render output
+  ![output](https://github.com/joeyskeys/btop/tree/master/resources/output.png)
 
 ### Bugs & feedback
 Please note this addon is still in development and there might be some bugs. Open an issue if you find one or you can send your PR directly.
