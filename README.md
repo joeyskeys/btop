@@ -6,7 +6,7 @@ Currently still in an early stage.
 ### How to use
 
   - Clone the repository
-  - Make an zip archive of the btop folder inside the repository(Linux users and use the create_archive.sh).
+  - Make an zip archive of the btop folder inside the repository(Linux users can use the create_archive.sh).
   - Install the addon inside blender
 
 After installing the addon, setup pbrt executable and cache folder in the addon preference.
@@ -33,7 +33,7 @@ Please note that this addon doesn't provide pbrt executable by itself, it just c
   ![materials](https://github.com/joeyskeys/btop/blob/master/resources/material.png)
 
   - Render output
-  
+
   ![output](https://github.com/joeyskeys/btop/blob/master/resources/output.png)
 
 ### Bugs & feedback
