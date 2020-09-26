@@ -42,22 +42,22 @@ class MeshIO(object):
 
         # Get rotation
         rot = matrix.to_quaternion()
-        if rot[0] == 0:
+        if rot.w == 0:
             rotate_angle = math.pi
-            x_fac = rot[1]
-            y_fac = rot[2]
-            z_fac = rot[3]
-        elif rot[0] == 1:
+            x_fac = rot.x
+            y_fac = rot.y
+            z_fac = rot.z
+        elif rot.w == 1:
             rotate_angle = 0
             x_fac = 0
             y_fac = 0
             z_fac = 1
         else:
-            rotate_angle = 2 * math.acos(rot[0])
-            denom = math.sqrt(1 - rot[0] * rot[0])
-            x_fac = rot[1] / denom
-            y_fac = rot[2] / denom
-            z_fac = rot[3] / denom
+            rotate_angle = math.degrees(2 * math.acos(rot.w))
+            denom = math.sqrt(1 - rot.w * rot.w)
+            x_fac = rot.x / denom
+            y_fac = rot.y / denom
+            z_fac = rot.z / denom
         rotate_vec = (x_fac, y_fac, z_fac)
 
         # Write out transformation
