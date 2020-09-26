@@ -19,18 +19,6 @@ import bpy
 
 
 class PBRTFilmProperties(bpy.types.PropertyGroup):
-    x_resolution: bpy.props.IntProperty(name="x_resolution",
-                                        description="The number of pixels in the x direction",
-                                        default=640,
-                                        soft_max=4096,
-                                        min=1)
-
-    y_resolution: bpy.props.IntProperty(name="y_resolution",
-                                        description="The number of pixels in the y direction",
-                                        default=480,
-                                        soft_max=2160,
-                                        min=1)
-
     crop_window_x_min: bpy.props.FloatProperty(name="crop_window_x_min",
                                                description="The minimum x of subregion of the image to render",
                                                default=0,
@@ -95,9 +83,12 @@ class PBRT_PT_film(bpy.types.Panel):
         layout = self.layout
         layout.use_property_split = True
 
+        # Get resolution from built-in properties to enable the camera adjustment in blender
+        render = context.scene.render
+        layout.row().prop(render, "resolution_x", text="Resolution X")
+        layout.row().prop(render, "resolution_y", text="Resolution Y")
+
         film_props = context.scene.pbrt_film_props
-        layout.row().prop(film_props, "x_resolution", text="Resolution X")
-        layout.row().prop(film_props, "y_resolution", text="Resolution Y")
         layout.row().prop(film_props, "crop_window_x_min", text="Crop Window X Min")
         layout.row().prop(film_props, "crop_window_x_max", text="Crop Window X Max")
         layout.row().prop(film_props, "crop_window_y_min", text="Crop Window Y Min")

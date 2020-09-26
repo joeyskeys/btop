@@ -30,13 +30,14 @@ class FilmIO(object):
     def write_to_file(self, writer):
 
         film_props = bpy.context.scene.pbrt_film_props
+        render = bpy.context.scene.render
 
         # Currently image is the only film type
         # Hard coded here
         film_line_comps = ['Film "image"']
 
-        film_line_comps.append('"integer xresolution" {}'.format(film_props.x_resolution))
-        film_line_comps.append('"integer yresolution" {}'.format(film_props.y_resolution))
+        film_line_comps.append('"integer xresolution" {}'.format(render.resolution_x))
+        film_line_comps.append('"integer yresolution" {}'.format(render.resolution_y))
 
         crop_win_x_min = film_props.crop_window_x_min
         crop_win_x_max = film_props.crop_window_x_max

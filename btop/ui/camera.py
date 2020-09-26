@@ -141,14 +141,19 @@ class PBRT_PT_camera(bpy.types.Panel):
 
         if cam_props.camera_type != "realistic":
             layout.row().prop(cam_props, "frame_ratio", text="Frame Ratio")
-            layout.row().prop(cam_props, "screen_window", text="Screen Window")
+            # Disable screen window for now
+            #layout.row().prop(cam_props, "screen_window_x_min", text="Screen Window")
+            #layout.row().prop(cam_props, "screen_window_x_max", text="Screen Window")
+            #layout.row().prop(cam_props, "screen_window_y_min", text="Screen Window")
+            #layout.row().prop(cam_props, "screen_window_y_max", text="Screen Window")
             
             if cam_props.camera_type != "environment":
                 layout.row().prop(cam_props, "lens_radius", text="Lens Radius")
                 layout.row().prop(cam_props, "focal_distance", text="Focal Distance")
 
             if cam_props.camera_type == "perspective":
-                layout.row().prop(cam_props, "fov", text="FOV")
+                camera = bpy.context.scene.camera.data
+                layout.row().prop(camera, "angle", text="Horizontal FOV")
 
         else:
             layout.row().prop(cam_props, "lens_file", text="Lens File")

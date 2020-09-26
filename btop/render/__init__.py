@@ -51,10 +51,10 @@ class PBRTRenderEngine(bpy.types.RenderEngine):
         cache_filepath = os.path.join(cache_folder, filename.replace('.blend', '.pbrt'))
         outfile = os.path.join(cache_folder, filename.replace('.blend', '.exr'))
 
-        # Get film resolution
-        film_props = bpy.context.scene.pbrt_film_props
-        x_resolution = film_props.x_resolution
-        y_resolution = film_props.y_resolution
+        # Get film resolution from camera attributes
+        render = bpy.context.scene.render
+        x_resolution = render.resolution_x
+        y_resolution = render.resolution_y
 
         # Export pbrt cache file
         exporter.export(cache_filepath)

@@ -39,8 +39,9 @@ class IntegratorIO(object):
             p_y_max = integrator_props.pixelbound_y_max
 
             film_props = bpy.context.scene.pbrt_film_props
-            film_x_resolution = film_props.x_resolution
-            film_y_resolution = film_props.y_resolution
+            render = bpy.context.scene.render
+            film_x_resolution = render.resolution_x
+            film_y_resolution = render.resolution_y
 
             integrator_line_comps.append('"integer pixelbounds" [{} {} {} {}]'.format(p_x_min,
                                                                                       min(p_x_max, film_x_resolution),

@@ -18,6 +18,8 @@
 import bpy
 import mathutils
 
+import math
+
 
 class CameraIO(object):
     """
@@ -56,17 +58,21 @@ class CameraIO(object):
 
         if camera_props.camera_type != "realistic":
             camera_line_comps.append('"float frameratio" {}'.format(camera_props.frame_ratio))
-            camera_line_comps.append('"float screenwindow" [{} {} {} {}]'.format(camera_props.screen_window_x_min,
-                                                                                 camera_props.screen_window_x_max,
-                                                                                 camera_props.screen_window_y_min,
-                                                                                 camera_props.screen_window_y_max))
+            #camera_line_comps.append('"float screenwindow" [{} {} {} {}]'.format(camera_props.screen_window_x_min,
+            #                                                                     camera_props.screen_window_x_max,
+            #                                                                     camera_props.screen_window_y_min,
+            #                                                                     camera_props.screen_window_y_max))
 
             if camera_props.camera_type != "environment":
                 camera_line_comps.append('"float lensradius" {}'.format(camera_props.lens_radius))
                 camera_line_comps.append('"float focaldistance" {}'.format(camera_props.focal_distance))
 
             if camera_props.camera_type == "perspective":
-                camera_line_comps.append('"float fov" {}'.format(camera_props.fov))
+                # Get fov from camera attributes
+                angle = bpy.context.scene.camera.data.angle
+                ratio = bpy.context.scene.render.resolution_y / bpy.context.scene.render.resolution_x
+                fov = math.degrees(angle * ratio)
+                camera_line_comps.append('"float fov" {}'.format(fov))
 
         else:
             camera_line_comps.append('"string lensfile" "{}"'.format(camera_props.lens_file))
