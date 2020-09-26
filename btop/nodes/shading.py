@@ -92,7 +92,7 @@ class PBRTShadingNode(bpy.types.ShaderNode):
         if self.category == 'Texture':
             shader_line_comps.append('"{}"'.format(self.name))
             # Determine texture node type by connected upstream socket type
-            upstream_socket_type = self.outputs['Shader'].links[0].to_socket.type
+            upstream_socket_type = self.outputs['Output'].links[0].to_socket.type
             shader_line_comps.append('"{}"'.format(socket_type_mapping[upstream_socket_type]))
 
         shader_line_comps.append('"{}"'.format(self.node_type))
@@ -133,7 +133,7 @@ class PBRTShadingNode(bpy.types.ShaderNode):
 class PBRTShaderNode(PBRTShadingNode):
     def init(self, context):
         super(PBRTShaderNode, self).init(context)
-        self.outputs.new('NodeSocketShader', 'Shader')
+        self.outputs.new('NodeSocketShader', 'Output')
 
     def draw_buttons(self, context, layout: 'UILayout'):
         pass
@@ -597,7 +597,7 @@ class PBRTShaderNodeUber(PBRTShaderNodeWithRemapRoughness):
 class PBRTTextureNode(PBRTShadingNode):
     def init(self, context):
         super(PBRTTextureNode, self).init(context)
-        self.outputs.new('NodeSocketColor', 'Shader')
+        self.outputs.new('NodeSocketColor', 'Output')
 
 
 @PBRTNodeTypes('texture')
@@ -1260,10 +1260,6 @@ class PBRTTextureNodeDots(PBRTTextureNode):
     v2: bpy.props.FloatVectorProperty(name="v2",
                                       description="Vector to define planar mapping",
                                       default=(0, 1, 0))
-
-    def init(self, context):
-        super(PBRTTextureNode, self).init(context)
-        self.outputs.new('NodeSocketColor', 'Shader')
 
     def draw_buttons(self, context, layout: 'UILayout'):
         layout.prop(self, 'mapping')
