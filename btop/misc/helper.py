@@ -29,11 +29,11 @@ class Registry(object):
 
         # We need the class type bacause cls.__class__.__name__ is not the correct value
         if node_type == 'material':
-            self.material_nodes.append((cls.class_type, cls.shader_type))
+            self.material_nodes.append((cls.class_type, cls.node_type))
             cls.category = 'Material'
 
         elif node_type == 'texture':
-            self.texture_nodes.append((cls.class_type, cls.shader_type))
+            self.texture_nodes.append((cls.class_type, cls.node_type))
             cls.category = 'Texture'
 
         else:

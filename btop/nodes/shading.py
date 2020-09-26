@@ -33,7 +33,7 @@ attribute_type_mapping = {
 }
 
 
-class PBRTShaderNode(bpy.types.ShaderNode):
+class PBRTShadingNode(bpy.types.ShaderNode):
     """
     Base class for PBRT shading nodes
     """
@@ -55,13 +55,12 @@ class PBRTShaderNode(bpy.types.ShaderNode):
 
     def init(self, context):
         self.create_sockets_from_dict()
-        self.outputs.new('NodeSocketShader', 'Shader')
 
     # This interface returns a general json dict and may serve for other purpose later.
     def get_data_dict(self):
         param_dict = {
             'name': self.name,
-            'type': self.shader_type,
+            'type': self.node_type,
             'params': {}
         }
 
@@ -96,7 +95,7 @@ class PBRTShaderNode(bpy.types.ShaderNode):
             upstream_socket_type = self.outputs['Shader'].links[0].to_socket.type
             shader_line_comps.append('"{}"'.format(socket_type_mapping[upstream_socket_type]))
 
-        shader_line_comps.append('"{}"'.format(self.shader_type))
+        shader_line_comps.append('"{}"'.format(self.node_type))
 
         for key, value in self.socket_dict.items():
             sock = self.inputs[key]
@@ -131,6 +130,15 @@ class PBRTShaderNode(bpy.types.ShaderNode):
         file_writer.write(indent * '\t' + ' '.join(comps) + '\n')
 
 
+class PBRTShaderNode(PBRTShadingNode):
+    def init(self, context):
+        super(PBRTShaderNode, self).init(context)
+        self.outputs.new('NodeSocketShader', 'Shader')
+
+    def draw_buttons(self, context, layout: 'UILayout'):
+        pass
+
+
 class PBRTShaderNodeWithRemapRoughness(PBRTShaderNode):
     remaproughness = bpy.props.BoolProperty(name="remaproughness",
                                             description="Roughness values are expected to be in the range [0,1] if true",
@@ -155,7 +163,7 @@ class PBRTShaderNodeDisney(PBRTShaderNode):
     bl_label = 'PBRT Disney Shader'
 
     class_type = 'PBRTShaderNodeDisney'
-    shader_type = 'disney'
+    node_type = 'disney'
 
     socket_dict = {
         'color': ('NodeSocketColor', (0.5, 0.5, 0.5, 1.0)),
@@ -181,10 +189,10 @@ class PBRTShaderNodeDisney(PBRTShaderNode):
         self.inputs['difftrans'].enabled = self.thin
         self.inputs['flatness'].enabled = self.thin
 
-    thin = bpy.props.BoolProperty(name="thin",
-                                  description="Controls whether the thin is enabled surface model",
-                                  default=False,
-                                  update=update_visibility)
+    thin: bpy.props.BoolProperty(name="thin",
+                                 description="Controls whether the thin is enabled surface model",
+                                 default=False,
+                                 update=update_visibility)
 
     def get_data_dict(self):
         param_dict = super().get_data_dict()
@@ -202,11 +210,10 @@ class PBRTShaderNodeFourier(PBRTShaderNode):
     bl_label = 'PBRT Fourier Shader'
 
     class_type = 'PBRTShaderNodeFourier'
-    shader_type = 'fourier'
+    node_type = 'fourier'
 
-    bsdffile = bpy.props.StringProperty(name="bsdffile",
-                                        description="File that stores the Fourier BSDF description",
-                                        )
+    bsdffile: bpy.props.StringProperty(name="bsdffile",
+                                       description="File that stores the Fourier BSDF description")
 
     def draw_buttons(self, context, layout: 'UILayout'):
         layout.prop(self, 'bsdffile')
@@ -214,7 +221,7 @@ class PBRTShaderNodeFourier(PBRTShaderNode):
     def get_data_dict(self):
         return {
             'name': self.name,
-            'type': self.shader_type,
+            'type': self.node_type,
             'params': {'bsdffile': self.bsdffile}
         }
 
@@ -229,7 +236,7 @@ class PBRTShaderNodeGlass(PBRTShaderNodeWithRemapRoughness):
     bl_label = 'PBRT Glass Shader'
 
     class_type = 'PBRTShaderNodeGlass'
-    shader_type = 'glass'
+    node_type = 'glass'
 
     socket_dict = {
         'Kr': ('NodeSocketColor', (1.0, 1.0, 1.0, 1.0)),
@@ -239,13 +246,30 @@ class PBRTShaderNodeGlass(PBRTShaderNodeWithRemapRoughness):
         'vroughness': ('NodeSocketFloat', 0),
     }
 
+    remaproughness: bpy.props.BoolProperty(name="remaproughness",
+                                           description="Roughness values are expected to be in the range [0,1] if true",
+                                           default=True)
+
+    def draw_buttons(self, context, layout: 'UILayout'):
+        layout.prop(self, 'remaproughness')
+
+    def get_data_dict(self):
+        param_dict = super().get_data_dict()
+        param_dict['params'].update({'remaproughness': self.remaproughness})
+        return param_dict
+
+    def export_comps(self, file_writer):
+        comps = super().export_comps(file_writer)
+        comps.append('"{} {}" "{}"'.format('bool', 'remaproughness', 'true' if self.remaproughness else 'false'))
+        return comps
+
 
 @PBRTNodeTypes('material')
 class PBRTShaderNodeHair(PBRTShaderNode):
     bl_label = 'PBRT Hair Shader'
 
     class_type = 'PBRTShaderNodeHair'
-    shader_type = 'hair'
+    node_type = 'hair'
 
     socket_dict = {
         'sigma_a': ('NodeSocketColor', (0, 0, 0, 1)),
@@ -258,13 +282,30 @@ class PBRTShaderNodeHair(PBRTShaderNode):
         'alpha': ('NodeSocketFloat', 2),
     }
 
+    remaproughness: bpy.props.BoolProperty(name="remaproughness",
+                                           description="Roughness values are expected to be in the range [0,1] if true",
+                                           default=True)
+
+    def draw_buttons(self, context, layout: 'UILayout'):
+        layout.prop(self, 'remaproughness')
+
+    def get_data_dict(self):
+        param_dict = super().get_data_dict()
+        param_dict['params'].update({'remaproughness': self.remaproughness})
+        return param_dict
+
+    def export_comps(self, file_writer):
+        comps = super().export_comps(file_writer)
+        comps.append('"{} {}" "{}"'.format('bool', 'remaproughness', 'true' if self.remaproughness else 'false'))
+        return comps
+
 
 @PBRTNodeTypes('material')
 class PBRTShaderNodeKdSubsurface(PBRTShaderNodeWithRemapRoughness):
     bl_label = 'PBRT KdSubsurface Shader'
 
     class_type = 'PBRTShaderNodeKdSubsurface'
-    shader_type = 'kdsubsurface'
+    node_type = 'kdsubsurface'
 
     socket_dict = {
         'Kd': ('NodeSocketColor', (0.5, 0.5, 0.5, 1.0)),
@@ -276,13 +317,30 @@ class PBRTShaderNodeKdSubsurface(PBRTShaderNodeWithRemapRoughness):
         'vroughness': ('NodeSocketFloat', 0),
     }
 
+    remaproughness: bpy.props.BoolProperty(name="remaproughness",
+                                           description="Roughness values are expected to be in the range [0,1] if true",
+                                           default=True)
+
+    def draw_buttons(self, context, layout: 'UILayout'):
+        layout.prop(self, 'remaproughness')
+
+    def get_data_dict(self):
+        param_dict = super().get_data_dict()
+        param_dict['params'].update({'remaproughness': self.remaproughness})
+        return param_dict
+
+    def export_comps(self, file_writer):
+        comps = super().export_comps(file_writer)
+        comps.append('"{} {}" "{}"'.format('bool', 'remaproughness', 'true' if self.remaproughness else 'false'))
+        return comps
+
 
 @PBRTNodeTypes('material')
 class PBRTShaderNodeMatte(PBRTShaderNode):
     bl_label = 'PBRT Matte Shader'
 
     class_type = 'PBRTShaderNodeMatte'
-    shader_type = 'matte'
+    node_type = 'matte'
 
     socket_dict = {
         'Kd': ('NodeSocketColor', (0.5, 0.5, 0.5, 1.0)),
@@ -295,7 +353,7 @@ class PBRTShaderNodeMetal(PBRTShaderNodeWithRemapRoughness):
     bl_label = 'PBRT Metal Shader'
 
     class_type = 'PBRTShaderNodeMetal'
-    shader_type = 'metal'
+    node_type = 'metal'
 
     socket_dict = {
         'eta': ('NodeSocketColor', (1.0, 1.0, 1.0, 1.0)),
@@ -305,13 +363,30 @@ class PBRTShaderNodeMetal(PBRTShaderNodeWithRemapRoughness):
         'vroughness': ('NodeSocketFloat', 0.01),
     }
 
+    remaproughness: bpy.props.BoolProperty(name="remaproughness",
+                                           description="Roughness values are expected to be in the range [0,1] if true",
+                                           default=True)
+
+    def draw_buttons(self, context, layout: 'UILayout'):
+        layout.prop(self, 'remaproughness')
+
+    def get_data_dict(self):
+        param_dict = super().get_data_dict()
+        param_dict['params'].update({'remaproughness': self.remaproughness})
+        return param_dict
+
+    def export_comps(self, file_writer):
+        comps = super().export_comps(file_writer)
+        comps.append('"{} {}" "{}"'.format('bool', 'remaproughness', 'true' if self.remaproughness else 'false'))
+        return comps
+
 
 @PBRTNodeTypes('material')
 class PBRTShaderNodeMirror(PBRTShaderNode):
     bl_label = 'PBRT Mirror Shader'
 
     class_type = 'PBRTShaderNodeMirror'
-    shader_type = 'mirror'
+    node_type = 'mirror'
 
     socket_dict = {
         'Kr': ('NodeSocketColor', 0.9),
@@ -323,7 +398,7 @@ class PBRTShaderNodeMixture(PBRTShaderNode):
     bl_label = 'PBRT Mixture Shader'
 
     class_type = 'PBRTShaderNodeMixture'
-    shader_type = 'mix'
+    node_type = 'mix'
 
     socket_dict = {
         'amount': ('NodeSocketVector', (0.5, 0.5, 0.5)),
@@ -337,7 +412,7 @@ class PBRTShaderNodePlastic(PBRTShaderNodeWithRemapRoughness):
     bl_label = 'PBRT Plastic Shader'
 
     class_type = 'PBRTShaderNodePlastic'
-    shader_type = 'plastic'
+    node_type = 'plastic'
 
     socket_dict = {
         'Kd': ('NodeSocketColor', (0.25, 0.25, 0.25, 1.0)),
@@ -345,13 +420,30 @@ class PBRTShaderNodePlastic(PBRTShaderNodeWithRemapRoughness):
         'roughness': ('NodeSocketFloat', 0.1),
     }
 
+    remaproughness: bpy.props.BoolProperty(name="remaproughness",
+                                           description="Roughness values are expected to be in the range [0,1] if true",
+                                           default=True)
+
+    def draw_buttons(self, context, layout: 'UILayout'):
+        layout.prop(self, 'remaproughness')
+
+    def get_data_dict(self):
+        param_dict = super().get_data_dict()
+        param_dict['params'].update({'remaproughness': self.remaproughness})
+        return param_dict
+
+    def export_comps(self, file_writer):
+        comps = super().export_comps(file_writer)
+        comps.append('"{} {}" "{}"'.format('bool', 'remaproughness', 'true' if self.remaproughness else 'false'))
+        return comps
+
 
 @PBRTNodeTypes('material')
 class PBRTShaderNodeSubstrate(PBRTShaderNodeWithRemapRoughness):
     bl_label = 'PBRT Substrate Shader'
 
     class_type = 'PBRTShaderNodeSubstrate'
-    shader_type = 'substrate'
+    node_type = 'substrate'
 
     socket_dict = {
         'Kd': ('NodeSocketColor', (0.5, 0.5, 0.5, 1.0)),
@@ -360,13 +452,30 @@ class PBRTShaderNodeSubstrate(PBRTShaderNodeWithRemapRoughness):
         'vroughness': ('NodeSocketFloat', 0.1),
     }
 
+    remaproughness: bpy.props.BoolProperty(name="remaproughness",
+                                           description="Roughness values are expected to be in the range [0,1] if true",
+                                           default=True)
+
+    def draw_buttons(self, context, layout: 'UILayout'):
+        layout.prop(self, 'remaproughness')
+
+    def get_data_dict(self):
+        param_dict = super().get_data_dict()
+        param_dict['params'].update({'remaproughness': self.remaproughness})
+        return param_dict
+
+    def export_comps(self, file_writer):
+        comps = super().export_comps(file_writer)
+        comps.append('"{} {}" "{}"'.format('bool', 'remaproughness', 'true' if self.remaproughness else 'false'))
+        return comps
+
 
 @PBRTNodeTypes('material')
 class PBRTShaderNodeSubsurface(PBRTShaderNodeWithRemapRoughness):
     bl_label = 'PBRT Subsurface Shader'
 
     class_type = 'PBRTShaderNodeSubsurface'
-    shader_type = 'subsurface'
+    node_type = 'subsurface'
 
     socket_dict = {
         'sigma_a': ('NodeSocketVector', (0.0011, 0.0024, 0.014)),
@@ -377,18 +486,22 @@ class PBRTShaderNodeSubsurface(PBRTShaderNodeWithRemapRoughness):
         'uroughness': ('NodeSocketFloat', 0),
         'vroughness': ('NodeSocketFloat', 0),
     }
+    remaproughness: bpy.props.BoolProperty(name="remaproughness",
+                                           description="Roughness values are expected to be in the range [0,1] if true",
+                                           default=True)
 
-    coefficient_name = bpy.props.StringProperty(name="name",
-                                                description="Name of measured subsurface scattering coefficients",
-                                                default="")
+    coefficient_name: bpy.props.StringProperty(name="name",
+                                               description="Name of measured subsurface scattering coefficients",
+                                               default="")
 
-    scale = bpy.props.FloatProperty(name="scale",
-                                    description="Scale factor that is applied to sigma_a and sigma_prime_s",
-                                    default=1,
-                                    soft_max=2,
-                                    min=0)
+    scale: bpy.props.FloatProperty(name="scale",
+                                   description="Scale factor that is applied to sigma_a and sigma_prime_s",
+                                   default=1,
+                                   soft_max=2,
+                                   min=0)
 
     def draw_buttons(self, context, layout: 'UILayout'):
+        layout.prop(self, 'remaproughness')
         layout.prop(self, 'coefficient_name')
         layout.prop(self, 'scale')
         super(PBRTShaderNodeSubsurface, self).draw_buttons(context, layout)
@@ -397,12 +510,14 @@ class PBRTShaderNodeSubsurface(PBRTShaderNodeWithRemapRoughness):
         data_dict = super(PBRTShaderNodeSubsurface, self).get_data_dict()
         data_dict['params']['name'] = self.coefficient_name
         data_dict['params']['scale'] = self.scale
+        data_dict['params'].update({'remaproughness': self.remaproughness})
         return data_dict
 
     def export_comps(self, file_writer):
         comps = super().export_comps(file_writer)
         comps.append('"{} {}" "{}"'.format('string', 'name', self.coefficient_name))
         comps.append('"{} {}" {}'.format('float scale', self.scale))
+        comps.append('"{} {}" "{}"'.format('bool', 'remaproughness', 'true' if self.remaproughness else 'false'))
         return comps
 
 
@@ -411,7 +526,7 @@ class PBRTShaderNodeTranslucent(PBRTShaderNodeWithRemapRoughness):
     bl_label = 'PBRT Translucent Shader'
 
     class_type = 'PBRTShaderNodeTranslucent'
-    shader_type = 'translucent'
+    node_type = 'translucent'
 
     socket_dict = {
         'Kd': ('NodeSocketColor', (0.25, 0.25, 0.25, 1.0)),
@@ -421,13 +536,30 @@ class PBRTShaderNodeTranslucent(PBRTShaderNodeWithRemapRoughness):
         'roughness': ('NodeSocketFloat', 0.1),
     }
 
+    remaproughness: bpy.props.BoolProperty(name="remaproughness",
+                                           description="Roughness values are expected to be in the range [0,1] if true",
+                                           default=True)
+
+    def draw_buttons(self, context, layout: 'UILayout'):
+        layout.prop(self, 'remaproughness')
+
+    def get_data_dict(self):
+        param_dict = super().get_data_dict()
+        param_dict['params'].update({'remaproughness': self.remaproughness})
+        return param_dict
+
+    def export_comps(self, file_writer):
+        comps = super().export_comps(file_writer)
+        comps.append('"{} {}" "{}"'.format('bool', 'remaproughness', 'true' if self.remaproughness else 'false'))
+        return comps
+
 
 @PBRTNodeTypes('material')
 class PBRTShaderNodeUber(PBRTShaderNodeWithRemapRoughness):
     bl_label = 'PBRT Uber Shader'
 
     class_type = 'PBRTShaderNodeUber'
-    shader_type = 'uber'
+    node_type = 'uber'
 
     socket_dict = {
         'Kd': ('NodeSocketColor', (0.25, 0.25, 0.25, 1.0)),
@@ -441,41 +573,223 @@ class PBRTShaderNodeUber(PBRTShaderNodeWithRemapRoughness):
         'opacity': ('NodeSocketColor', (1, 1, 1, 1)),
     }
 
+    remaproughness: bpy.props.BoolProperty(name="remaproughness",
+                                           description="Roughness values are expected to be in the range [0,1] if true",
+                                           default=True)
+
+    def draw_buttons(self, context, layout: 'UILayout'):
+        layout.prop(self, 'remaproughness')
+
+    def get_data_dict(self):
+        param_dict = super().get_data_dict()
+        param_dict['params'].update({'remaproughness': self.remaproughness})
+        return param_dict
+
+    def export_comps(self, file_writer):
+        comps = super().export_comps(file_writer)
+        comps.append('"{} {}" "{}"'.format('bool', 'remaproughness', 'true' if self.remaproughness else 'false'))
+        return comps
+
 
 # Texture nodes provides the flexibility of specifying both
 # color and float for a single socket.
 # We don't support this feature for now.
+class PBRTTextureNode(PBRTShadingNode):
+    def init(self, context):
+        super(PBRTTextureNode, self).init(context)
+        self.outputs.new('NodeSocketColor', 'Shader')
+
+
 @PBRTNodeTypes('texture')
-class PBRTShaderNodeConstant(PBRTShaderNode):
+class PBRTTextureNodeConstant(PBRTTextureNode):
     bl_label = 'PBRT Constant Texture'
 
-    class_type = 'PBRTShaderNodeConstant'
-    shader_type = 'constant'
+    class_type = 'PBRTTextureNodeConstant'
+    node_type = 'constant'
 
     socket_dict = {
         'value': ('NodeSocketColor', (1, 1, 1, 1)),
     }
 
+    # Currently don't have a convenient way to share the common properties
+    mapping: bpy.props.EnumProperty(name="mapping",
+                                    items=[
+                                        ("uv", "UV", ""),
+                                        ("spherical", "Spherical", ""),
+                                        ("cylindrical", "Cylindrical", ""),
+                                        ("planar", "Planar", ""),
+                                    ],
+                                    default="uv")
+
+    uscale: bpy.props.FloatProperty(name="uscale",
+                                    description="Scaling factors to be applied to the u texture coordinates",
+                                    default=1,
+                                    min=0)
+
+    vscale: bpy.props.FloatProperty(name="vscale",
+                                    description="Scaling factors to be applied to the v texture coordinates",
+                                    default=1,
+                                    min=0)
+
+    udelta: bpy.props.FloatProperty(name="udelta",
+                                    description="An offset to be applied to the u texture coordinates",
+                                    default=0)
+
+    vdelta: bpy.props.FloatProperty(name="vdelta",
+                                    description="An offset to be applied to the v texture coordinates",
+                                    default=0)
+
+    v1: bpy.props.FloatVectorProperty(name="v1",
+                                      description="Vector to define planar mapping",
+                                      default=(1, 0, 0))
+
+    v2: bpy.props.FloatVectorProperty(name="v2",
+                                      description="Vector to define planar mapping",
+                                      default=(0, 1, 0))
+
+    def draw_buttons(self, context, layout: 'UILayout'):
+        layout.prop(self, 'mapping')
+        if self.mapping in ('uv', 'planar'):
+            layout.prop(self, 'udelta')
+            layout.prop(self, 'vdelta')
+            if self.mapping == 'uv':
+                layout.prop(self, 'uscale')
+                layout.prop(self, 'vscale')
+            else:
+                layout.prop(self, 'v1')
+                layout.prop(self, 'v2')
+
+    def update_visibility(self, context):
+        self.udelta.enabled = self.mapping in ('uv', 'planar')
+        self.vdelta.enabled = self.mapping in ('uv', 'planar')
+
+    def get_data_dict(self):
+        data_dict = super(PBRTTextureNodeImageMap, self).get_data_dict()
+        data_dict['params']['mapping'] = self.mapping
+        if self.mapping in ('uv', 'planar'):
+            data_dict['params']['udelta'] = self.udelta
+            data_dict['params']['vdelta'] = self.vdelta
+            if self.mapping == 'uv':
+                data_dict['params']['uscale'] = self.uscale
+                data_dict['params']['vscale'] = self.vscale
+            else:
+                data_dict['params']['v1'] = (self.v1.x, self.v1.y, self.v1.z)
+                data_dict['params']['v2'] = (self.v2.x, self.v2.y, self.v2.z)
+        return data_dict
+
+    def export_comps(self, file_writer):
+        comps = super(PBRTTextureNode, self).export_comps(file_writer)
+        comps.append('"string mapping" "{}"'.format(self.mapping))
+        if self.mapping in ('uv', 'planar'):
+            comps.append('"float udelta" {}'.format(self.udelta))
+            comps.append('"float vdelta" {}'.format(self.vdelta))
+            if self.mapping == 'uv':
+                comps.append('"float uscale" {}'.format(self.uscale))
+                comps.append('"float vscale" {}'.format(self.vscale))
+            else:
+                comps.append('"vector v1" [{} {} {}]'.format(self.v1.x, self.v1.y, self.v1.z))
+                comps.append('"vector v2" [{} {} {}]'.format(self.v2.x, self.v2.y, self.v2.z))
+        return comps
+
 
 @PBRTNodeTypes('texture')
-class PBRTShaderNodeScale(PBRTShaderNode):
+class PBRTTextureNodeScale(PBRTTextureNode):
     bl_label = 'PBRT Scale Texture'
 
-    class_type = 'PBRTShaderNodeScale'
-    shader_type = 'scale'
+    class_type = 'PBRTTextureNodeScale'
+    node_type = 'scale'
 
     socket_dict = {
         'tex1': ('NodeSocketColor', (1, 1, 1, 1)),
         'tex2': ('NodeSocketColor', (1, 1, 1, 1)),
     }
 
+    mapping: bpy.props.EnumProperty(name="mapping",
+                                    items=[
+                                        ("uv", "UV", ""),
+                                        ("spherical", "Spherical", ""),
+                                        ("cylindrical", "Cylindrical", ""),
+                                        ("planar", "Planar", ""),
+                                    ],
+                                    default="uv")
+
+    uscale: bpy.props.FloatProperty(name="uscale",
+                                    description="Scaling factors to be applied to the u texture coordinates",
+                                    default=1,
+                                    min=0)
+
+    vscale: bpy.props.FloatProperty(name="vscale",
+                                    description="Scaling factors to be applied to the v texture coordinates",
+                                    default=1,
+                                    min=0)
+
+    udelta: bpy.props.FloatProperty(name="udelta",
+                                    description="An offset to be applied to the u texture coordinates",
+                                    default=0)
+
+    vdelta: bpy.props.FloatProperty(name="vdelta",
+                                    description="An offset to be applied to the v texture coordinates",
+                                    default=0)
+
+    v1: bpy.props.FloatVectorProperty(name="v1",
+                                      description="Vector to define planar mapping",
+                                      default=(1, 0, 0))
+
+    v2: bpy.props.FloatVectorProperty(name="v2",
+                                      description="Vector to define planar mapping",
+                                      default=(0, 1, 0))
+
+    def draw_buttons(self, context, layout: 'UILayout'):
+        layout.prop(self, 'mapping')
+        if self.mapping in ('uv', 'planar'):
+            layout.prop(self, 'udelta')
+            layout.prop(self, 'vdelta')
+            if self.mapping == 'uv':
+                layout.prop(self, 'uscale')
+                layout.prop(self, 'vscale')
+            else:
+                layout.prop(self, 'v1')
+                layout.prop(self, 'v2')
+
+    def update_visibility(self, context):
+        self.udelta.enabled = self.mapping in ('uv', 'planar')
+        self.vdelta.enabled = self.mapping in ('uv', 'planar')
+
+    def get_data_dict(self):
+        data_dict = super(PBRTTextureNodeImageMap, self).get_data_dict()
+        data_dict['params']['mapping'] = self.mapping
+        if self.mapping in ('uv', 'planar'):
+            data_dict['params']['udelta'] = self.udelta
+            data_dict['params']['vdelta'] = self.vdelta
+            if self.mapping == 'uv':
+                data_dict['params']['uscale'] = self.uscale
+                data_dict['params']['vscale'] = self.vscale
+            else:
+                data_dict['params']['v1'] = (self.v1.x, self.v1.y, self.v1.z)
+                data_dict['params']['v2'] = (self.v2.x, self.v2.y, self.v2.z)
+        return data_dict
+
+    def export_comps(self, file_writer):
+        comps = super(PBRTTextureNode, self).export_comps(file_writer)
+        comps.append('"string mapping" "{}"'.format(self.mapping))
+        if self.mapping in ('uv', 'planar'):
+            comps.append('"float udelta" {}'.format(self.udelta))
+            comps.append('"float vdelta" {}'.format(self.vdelta))
+            if self.mapping == 'uv':
+                comps.append('"float uscale" {}'.format(self.uscale))
+                comps.append('"float vscale" {}'.format(self.vscale))
+            else:
+                comps.append('"vector v1" [{} {} {}]'.format(self.v1.x, self.v1.y, self.v1.z))
+                comps.append('"vector v2" [{} {} {}]'.format(self.v2.x, self.v2.y, self.v2.z))
+        return comps
+
 
 @PBRTNodeTypes('texture')
-class PBRTShaderNodeMix(PBRTShaderNode):
+class PBRTTextureNodeMix(PBRTTextureNode):
     bl_label = 'PBRT Mix Texture'
 
-    class_type = 'PBRTShaderNodeMix'
-    shader_type = 'mix'
+    class_type = 'PBRTTextureNodeMix'
+    node_type = 'mix'
 
     socket_dict = {
         'tex1': ('NodeSocketColor', (0, 0, 0, 1)),
@@ -483,13 +797,92 @@ class PBRTShaderNodeMix(PBRTShaderNode):
         'amount': ('NodeSocketFloat', 0.5),
     }
 
+    mapping: bpy.props.EnumProperty(name="mapping",
+                                    items=[
+                                        ("uv", "UV", ""),
+                                        ("spherical", "Spherical", ""),
+                                        ("cylindrical", "Cylindrical", ""),
+                                        ("planar", "Planar", ""),
+                                    ],
+                                    default="uv")
+
+    uscale: bpy.props.FloatProperty(name="uscale",
+                                    description="Scaling factors to be applied to the u texture coordinates",
+                                    default=1,
+                                    min=0)
+
+    vscale: bpy.props.FloatProperty(name="vscale",
+                                    description="Scaling factors to be applied to the v texture coordinates",
+                                    default=1,
+                                    min=0)
+
+    udelta: bpy.props.FloatProperty(name="udelta",
+                                    description="An offset to be applied to the u texture coordinates",
+                                    default=0)
+
+    vdelta: bpy.props.FloatProperty(name="vdelta",
+                                    description="An offset to be applied to the v texture coordinates",
+                                    default=0)
+
+    v1: bpy.props.FloatVectorProperty(name="v1",
+                                      description="Vector to define planar mapping",
+                                      default=(1, 0, 0))
+
+    v2: bpy.props.FloatVectorProperty(name="v2",
+                                      description="Vector to define planar mapping",
+                                      default=(0, 1, 0))
+
+    def draw_buttons(self, context, layout: 'UILayout'):
+        layout.prop(self, 'mapping')
+        if self.mapping in ('uv', 'planar'):
+            layout.prop(self, 'udelta')
+            layout.prop(self, 'vdelta')
+            if self.mapping == 'uv':
+                layout.prop(self, 'uscale')
+                layout.prop(self, 'vscale')
+            else:
+                layout.prop(self, 'v1')
+                layout.prop(self, 'v2')
+
+    def update_visibility(self, context):
+        self.udelta.enabled = self.mapping in ('uv', 'planar')
+        self.vdelta.enabled = self.mapping in ('uv', 'planar')
+
+    def get_data_dict(self):
+        data_dict = super(PBRTTextureNodeImageMap, self).get_data_dict()
+        data_dict['params']['mapping'] = self.mapping
+        if self.mapping in ('uv', 'planar'):
+            data_dict['params']['udelta'] = self.udelta
+            data_dict['params']['vdelta'] = self.vdelta
+            if self.mapping == 'uv':
+                data_dict['params']['uscale'] = self.uscale
+                data_dict['params']['vscale'] = self.vscale
+            else:
+                data_dict['params']['v1'] = (self.v1.x, self.v1.y, self.v1.z)
+                data_dict['params']['v2'] = (self.v2.x, self.v2.y, self.v2.z)
+        return data_dict
+
+    def export_comps(self, file_writer):
+        comps = super(PBRTTextureNode, self).export_comps(file_writer)
+        comps.append('"string mapping" "{}"'.format(self.mapping))
+        if self.mapping in ('uv', 'planar'):
+            comps.append('"float udelta" {}'.format(self.udelta))
+            comps.append('"float vdelta" {}'.format(self.vdelta))
+            if self.mapping == 'uv':
+                comps.append('"float uscale" {}'.format(self.uscale))
+                comps.append('"float vscale" {}'.format(self.vscale))
+            else:
+                comps.append('"vector v1" [{} {} {}]'.format(self.v1.x, self.v1.y, self.v1.z))
+                comps.append('"vector v2" [{} {} {}]'.format(self.v2.x, self.v2.y, self.v2.z))
+        return comps
+
 
 @PBRTNodeTypes('texture')
-class PBRTShaderNodeBiLerp(PBRTShaderNode):
+class PBRTTextureNodeBiLerp(PBRTTextureNode):
     bl_label = 'PBRT Bilinear Interpolation Texture'
 
-    class_type = 'PBRTShaderNodeBilerp'
-    shader_type = 'bilerp'
+    class_type = 'PBRTTextureNodeBilerp'
+    node_type = 'bilerp'
 
     socket_dict = {
         'v00': ('NodeSocketColor', (0, 0, 0, 1)),
@@ -498,260 +891,748 @@ class PBRTShaderNodeBiLerp(PBRTShaderNode):
         'v11': ('NodeSocketColor', (1, 1, 1, 1)),
     }
 
+    mapping: bpy.props.EnumProperty(name="mapping",
+                                    items=[
+                                        ("uv", "UV", ""),
+                                        ("spherical", "Spherical", ""),
+                                        ("cylindrical", "Cylindrical", ""),
+                                        ("planar", "Planar", ""),
+                                    ],
+                                    default="uv")
 
-@PBRTNodeTypes('texture')
-class PBRTShaderNodeImageMap(PBRTShaderNode):
-    bl_label = 'PBRT Image Map Texture'
-
-    class_type = 'PBRTShaderNodeImageMap'
-    shader_type = 'imagemap'
-
-    filename = bpy.props.StringProperty(name="filename",
-                                        description="The filename of the image to load",
-                                        default="",
-                                        subtype='FILE_PATH')
-
-    wrap = bpy.props.EnumProperty(name="wrap",
-                                  items=[
-                                      ("repeat", "Repeat", ""),
-                                      ("black", "Black", ""),
-                                      ("clamp", "Clamp", ""),
-                                  ],
-                                  default="repeat")
-
-    maxanisotropy = bpy.props.FloatProperty(name="maxanisotropy",
-                                            description="The maximum elliptical eccentricity for the EWA algorithm",
-                                            default=8,
-                                            soft_max=20,
-                                            min=0)
-
-    trilinear = bpy.props.BoolProperty(name="trilinear",
-                                       description="If true, perform trilinear interpolation when looking up pixel values",
-                                       default=False)
-
-    scale = bpy.props.FloatProperty(name="scale",
-                                    description="Scale factor to apply to value looked up in texture",
+    uscale: bpy.props.FloatProperty(name="uscale",
+                                    description="Scaling factors to be applied to the u texture coordinates",
                                     default=1,
-                                    soft_max=10,
                                     min=0)
 
-    gamma = bpy.props.BoolProperty(name="gamma",
-                                   description="Indicates whether texel values should be converted from sRGB gamma space to linear space",
-                                   default=False)
+    vscale: bpy.props.FloatProperty(name="vscale",
+                                    description="Scaling factors to be applied to the v texture coordinates",
+                                    default=1,
+                                    min=0)
+
+    udelta: bpy.props.FloatProperty(name="udelta",
+                                    description="An offset to be applied to the u texture coordinates",
+                                    default=0)
+
+    vdelta: bpy.props.FloatProperty(name="vdelta",
+                                    description="An offset to be applied to the v texture coordinates",
+                                    default=0)
+
+    v1: bpy.props.FloatVectorProperty(name="v1",
+                                      description="Vector to define planar mapping",
+                                      default=(1, 0, 0))
+
+    v2: bpy.props.FloatVectorProperty(name="v2",
+                                      description="Vector to define planar mapping",
+                                      default=(0, 1, 0))
 
     def draw_buttons(self, context, layout: 'UILayout'):
+        layout.prop(self, 'mapping')
+        if self.mapping in ('uv', 'planar'):
+            layout.prop(self, 'udelta')
+            layout.prop(self, 'vdelta')
+            if self.mapping == 'uv':
+                layout.prop(self, 'uscale')
+                layout.prop(self, 'vscale')
+            else:
+                layout.prop(self, 'v1')
+                layout.prop(self, 'v2')
+
+    def update_visibility(self, context):
+        self.udelta.enabled = self.mapping in ('uv', 'planar')
+        self.vdelta.enabled = self.mapping in ('uv', 'planar')
+
+    def get_data_dict(self):
+        data_dict = super(PBRTTextureNodeImageMap, self).get_data_dict()
+        data_dict['params']['mapping'] = self.mapping
+        if self.mapping in ('uv', 'planar'):
+            data_dict['params']['udelta'] = self.udelta
+            data_dict['params']['vdelta'] = self.vdelta
+            if self.mapping == 'uv':
+                data_dict['params']['uscale'] = self.uscale
+                data_dict['params']['vscale'] = self.vscale
+            else:
+                data_dict['params']['v1'] = (self.v1.x, self.v1.y, self.v1.z)
+                data_dict['params']['v2'] = (self.v2.x, self.v2.y, self.v2.z)
+        return data_dict
+
+    def export_comps(self, file_writer):
+        comps = super(PBRTTextureNode, self).export_comps(file_writer)
+        comps.append('"string mapping" "{}"'.format(self.mapping))
+        if self.mapping in ('uv', 'planar'):
+            comps.append('"float udelta" {}'.format(self.udelta))
+            comps.append('"float vdelta" {}'.format(self.vdelta))
+            if self.mapping == 'uv':
+                comps.append('"float uscale" {}'.format(self.uscale))
+                comps.append('"float vscale" {}'.format(self.vscale))
+            else:
+                comps.append('"vector v1" [{} {} {}]'.format(self.v1.x, self.v1.y, self.v1.z))
+                comps.append('"vector v2" [{} {} {}]'.format(self.v2.x, self.v2.y, self.v2.z))
+        return comps
+
+
+@PBRTNodeTypes('texture')
+class PBRTTextureNodeImageMap(PBRTTextureNode):
+    bl_label = 'PBRT Image Map Texture'
+
+    class_type = 'PBRTTextureNodeImageMap'
+    node_type = 'imagemap'
+
+    mapping: bpy.props.EnumProperty(name="mapping",
+                                    items=[
+                                        ("uv", "UV", ""),
+                                        ("spherical", "Spherical", ""),
+                                        ("cylindrical", "Cylindrical", ""),
+                                        ("planar", "Planar", ""),
+                                    ],
+                                    default="uv")
+
+    uscale: bpy.props.FloatProperty(name="uscale",
+                                    description="Scaling factors to be applied to the u texture coordinates",
+                                    default=1,
+                                    min=0)
+
+    vscale: bpy.props.FloatProperty(name="vscale",
+                                    description="Scaling factors to be applied to the v texture coordinates",
+                                    default=1,
+                                    min=0)
+
+    udelta: bpy.props.FloatProperty(name="udelta",
+                                    description="An offset to be applied to the u texture coordinates",
+                                    default=0)
+
+    vdelta: bpy.props.FloatProperty(name="vdelta",
+                                    description="An offset to be applied to the v texture coordinates",
+                                    default=0)
+
+    v1: bpy.props.FloatVectorProperty(name="v1",
+                                      description="Vector to define planar mapping",
+                                      default=(1, 0, 0))
+
+    v2: bpy.props.FloatVectorProperty(name="v2",
+                                      description="Vector to define planar mapping",
+                                      default=(0, 1, 0))
+
+    filename: bpy.props.StringProperty(name="filename",
+                                       description="The filename of the image to load",
+                                       default="",
+                                       subtype='FILE_PATH')
+
+    wrap: bpy.props.EnumProperty(name="wrap",
+                                 items=[
+                                     ("repeat", "Repeat", ""),
+                                     ("black", "Black", ""),
+                                     ("clamp", "Clamp", ""),
+                                 ],
+                                 default="repeat")
+
+    maxanisotropy: bpy.props.FloatProperty(name="maxanisotropy",
+                                           description="The maximum elliptical eccentricity for the EWA algorithm",
+                                           default=8,
+                                           soft_max=20,
+                                           min=0)
+
+    trilinear: bpy.props.BoolProperty(name="trilinear",
+                                      description="If true, perform trilinear interpolation when looking up pixel values",
+                                      default=False)
+
+    scale: bpy.props.FloatProperty(name="scale",
+                                   description="Scale factor to apply to value looked up in texture",
+                                   default=1,
+                                   soft_max=10,
+                                   min=0)
+
+    gamma: bpy.props.BoolProperty(name="gamma",
+                                  description="Indicates whether texel values should be converted from sRGB gamma space to linear space",
+                                  default=False)
+
+    def draw_buttons(self, context, layout: 'UILayout'):
+        layout.prop(self, 'mapping')
+        if self.mapping in ('uv', 'planar'):
+            layout.prop(self, 'udelta')
+            layout.prop(self, 'vdelta')
+            if self.mapping == 'uv':
+                layout.prop(self, 'uscale')
+                layout.prop(self, 'vscale')
+            else:
+                layout.prop(self, 'v1')
+                layout.prop(self, 'v2')
+
         layout.prop(self, 'filename')
         layout.prop(self, 'wrap')
         layout.prop(self, 'maxanisotropy')
         layout.prop(self, 'trilinear')
         layout.prop(self, 'scale')
         layout.prop(self, 'gamma')
-        super(PBRTShaderNodeSubsurface, self).draw_buttons(context, layout)
 
     def get_data_dict(self):
-        data_dict = super(PBRTShaderNodeSubsurface, self).get_data_dict()
+        data_dict = super(PBRTTextureNodeImageMap, self).get_data_dict()
         data_dict['params']['filename'] = self.filename
         data_dict['params']['wrap'] = self.wrap
         data_dict['params']['maxanisotropy'] = self.maxanisotropy
         data_dict['params']['trilinear'] = self.trilinear
         data_dict['params']['scale'] = self.scale
         data_dict['params']['gamma'] = self.gamma
+        data_dict['params']['mapping'] = self.mapping
+        if self.mapping in ('uv', 'planar'):
+            data_dict['params']['udelta'] = self.udelta
+            data_dict['params']['vdelta'] = self.vdelta
+            if self.mapping == 'uv':
+                data_dict['params']['uscale'] = self.uscale
+                data_dict['params']['vscale'] = self.vscale
+            else:
+                data_dict['params']['v1'] = (self.v1.x, self.v1.y, self.v1.z)
+                data_dict['params']['v2'] = (self.v2.x, self.v2.y, self.v2.z)
         return data_dict
 
     def export_comps(self, file_writer):
         comps = super().export_comps(file_writer)
-        comps.append('"{} {}" "{}"'.format('string', 'filename', self.filename))
-        comps.append('"{} {}" "{}"'.format('string', 'wrap', self.wrap))
-        comps.append('"{} {}" {}'.format('float', 'maxanisotropy', self.maxanisotropy))
-        comps.append('"{} {}" "{}"'.format('bool', 'trilinear', 'true' if self.trilinear else 'false'))
-        comps.append('"{} {}" {}'.format('float', 'scale', self.scale))
-        comps.append('"{} {}" "{}"'.format('bool', 'gamma', self.gamma))
+        comps.append('"string filename" "{}"'.format(self.filename))
+        comps.append('"string wrap" "{}"'.format(self.wrap))
+        comps.append('"float maxanisotropy" {}'.format(self.maxanisotropy))
+        comps.append('"bool trilinear" "{}"'.format('true' if self.trilinear else 'false'))
+        comps.append('"float scale" {}'.format(self.scale))
+        comps.append('"bool gamma" "{}"'.format(self.gamma))
+        comps.append('"string mapping" "{}"'.format(self.mapping))
+        if self.mapping in ('uv', 'planar'):
+            comps.append('"float udelta" {}'.format(self.udelta))
+            comps.append('"float vdelta" {}'.format(self.vdelta))
+            if self.mapping == 'uv':
+                comps.append('"float uscale" {}'.format(self.uscale))
+                comps.append('"float vscale" {}'.format(self.vscale))
+            else:
+                comps.append('"vector v1" [{} {} {}]'.format(self.v1.x, self.v1.y, self.v1.z))
+                comps.append('"vector v2" [{} {} {}]'.format(self.v2.x, self.v2.y, self.v2.z))
         return comps
 
 
 @PBRTNodeTypes('texture')
-class PBRTNodeShaderNodeCheckerboard(PBRTShaderNode):
+class PBRTTextureNodeCheckerboard(PBRTTextureNode):
     bl_label = 'PBRT Checkerboard Texture'
 
-    class_type = 'PBRTNodeShaderNodeCheckerboard'
-    shader_type = 'checkerboard'
+    class_type = 'PBRTTextureNodeCheckerboard'
+    node_type = 'checkerboard'
 
     socket_dict = {
-        'tex1': ('NodeSocketSocket', (1, 1, 1, 1)),
-        'tex2': ('NodeSocketSocket', (0, 0, 0, 1)),
+        'tex1': ('NodeSocketColor', (1, 1, 1, 1)),
+        'tex2': ('NodeSocketColor', (0, 0, 0, 1)),
     }
 
-    dimension = bpy.props.IntProperty(name="dimension",
-                                      description="Sets the dimension of the checkerboard texture",
-                                      default=2,
-                                      max=3,
-                                      min=2)
-
-    aamode = bpy.props.EnumProperty(name="aamode",
+    mapping: bpy.props.EnumProperty(name="mapping",
                                     items=[
-                                        ("closedform", "Closedform", ""),
-                                        ("none", "None", ""),
+                                        ("uv", "UV", ""),
+                                        ("spherical", "Spherical", ""),
+                                        ("cylindrical", "Cylindrical", ""),
+                                        ("planar", "Planar", ""),
                                     ],
-                                    default="closedform")
+                                    default="uv")
+
+    uscale: bpy.props.FloatProperty(name="uscale",
+                                    description="Scaling factors to be applied to the u texture coordinates",
+                                    default=1,
+                                    min=0)
+
+    vscale: bpy.props.FloatProperty(name="vscale",
+                                    description="Scaling factors to be applied to the v texture coordinates",
+                                    default=1,
+                                    min=0)
+
+    udelta: bpy.props.FloatProperty(name="udelta",
+                                    description="An offset to be applied to the u texture coordinates",
+                                    default=0)
+
+    vdelta: bpy.props.FloatProperty(name="vdelta",
+                                    description="An offset to be applied to the v texture coordinates",
+                                    default=0)
+
+    v1: bpy.props.FloatVectorProperty(name="v1",
+                                      description="Vector to define planar mapping",
+                                      default=(1, 0, 0))
+
+    v2: bpy.props.FloatVectorProperty(name="v2",
+                                      description="Vector to define planar mapping",
+                                      default=(0, 1, 0))
+
+    dimension: bpy.props.IntProperty(name="dimension",
+                                     description="Sets the dimension of the checkerboard texture",
+                                     default=2,
+                                     max=3,
+                                     min=2)
+
+    aamode: bpy.props.EnumProperty(name="aamode",
+                                   items=[
+                                       ("closedform", "Closedform", ""),
+                                       ("none", "None", ""),
+                                   ],
+                                   default="closedform")
 
     def draw_buttons(self, context, layout: 'UILayout'):
+        layout.prop(self, 'mapping')
+        if self.mapping in ('uv', 'planar'):
+            layout.prop(self, 'udelta')
+            layout.prop(self, 'vdelta')
+            if self.mapping == 'uv':
+                layout.prop(self, 'uscale')
+                layout.prop(self, 'vscale')
+            else:
+                layout.prop(self, 'v1')
+                layout.prop(self, 'v2')
+
         layout.prop(self, 'dimension')
-        if (self.dimension == 2):
+        if self.dimension == 2:
             layout.prop(self, 'aamode')
-        super(PBRTShaderNodeSubsurface, self).draw_buttons(context, layout)
 
     def get_data_dict(self):
-        data_dict = super(PBRTShaderNodeSubsurface, self).get_data_dict()
+        data_dict = super().get_data_dict()
         data_dict['params']['dimension'] = self.dimension
         data_dict['params']['aamode'] = self.aamode
+        if self.mapping in ('uv', 'planar'):
+            data_dict['params']['udelta'] = self.udelta
+            data_dict['params']['vdelta'] = self.vdelta
+            if self.mapping == 'uv':
+                data_dict['params']['uscale'] = self.uscale
+                data_dict['params']['vscale'] = self.vscale
+            else:
+                data_dict['params']['v1'] = (self.v1.x, self.v1.y, self.v1.z)
+                data_dict['params']['v2'] = (self.v2.x, self.v2.y, self.v2.z)
         return data_dict
 
     def export_comps(self, file_writer):
         comps = super().export_comps(file_writer)
-        comps.append('"{} {}" {}'.format('integer', 'dimension', self.dimension))
-        comps.append('"{} {}" "{}"'.format('string', 'aamode', self.aamode))
+        comps.append('"integer dimension" {}'.format(self.dimension))
+        comps.append('"string aamode" "{}"'.format(self.aamode))
+        comps.append('"string mapping" "{}"'.format(self.mapping))
+        if self.mapping in ('uv', 'planar'):
+            comps.append('"float udelta" {}'.format(self.udelta))
+            comps.append('"float vdelta" {}'.format(self.vdelta))
+            if self.mapping == 'uv':
+                comps.append('"float uscale" {}'.format(self.uscale))
+                comps.append('"float vscale" {}'.format(self.vscale))
+            else:
+                comps.append('"vector v1" [{} {} {}]'.format(self.v1.x, self.v1.y, self.v1.z))
+                comps.append('"vector v2" [{} {} {}]'.format(self.v2.x, self.v2.y, self.v2.z))
         return comps
 
 
 @PBRTNodeTypes('texture')
-class PBRTNodeShaderNodeDots(PBRTShaderNode):
+class PBRTTextureNodeDots(PBRTTextureNode):
     bl_label = "PBRT Dots Texture"
 
-    class_type = 'PBRTNodeShaderNodeDots'
-    shader_type = 'dots'
+    class_type = 'PBRTTextureNodeDots'
+    node_type = 'dots'
 
     socket_dict = {
         'inside': ('NodeSocketColor', (1, 1, 1, 1)),
         'outside': ('NodeSocketColor', (0, 0, 0, 1)),
     }
 
+    mapping: bpy.props.EnumProperty(name="mapping",
+                                    items=[
+                                        ("uv", "UV", ""),
+                                        ("spherical", "Spherical", ""),
+                                        ("cylindrical", "Cylindrical", ""),
+                                        ("planar", "Planar", ""),
+                                    ],
+                                    default="uv")
 
-@PBRTNodeTypes('texture')
-class PBRTNodeShaderNodeFbm(PBRTShaderNode):
-    bl_label = 'PBRT Fbm Texture'
-
-    class_type = 'PBRTNodeShaderNodeFbm'
-    shader_type = 'fbm'
-
-    octaves = bpy.props.IntProperty(name="octaves",
-                                    description="The maximum number of octaves of noise to use in spectral synthesis",
-                                    default=8,
-                                    soft_max=20,
-                                    min=1)
-
-    roughness = bpy.props.FloatProperty(name="roughness",
-                                        description="The 'bumpiness' of the resulting texture",
-                                        default=0.5,
-                                        max=1,
-                                        min=0)
-
-    def draw_buttons(self, context, layout: 'UILayout'):
-        layout.prop(self, 'octaves')
-        layout.prop(self, 'roughness')
-        super(PBRTShaderNodeSubsurface, self).draw_buttons(context, layout)
-
-    def get_data_dict(self):
-        data_dict = super(PBRTShaderNodeSubsurface, self).get_data_dict()
-        data_dict['params']['octaves'] = self.octaves
-        data_dict['params']['roughness'] = self.roughness
-        return data_dict
-
-    def export_comps(self, file_writer):
-        comps = super().export_comps(file_writer)
-        comps.append('"{} {}" {}'.format('integer', 'octaves', self.octaves))
-        comps.append('"{} {}" {}'.format('float', 'roughness', self.roughness))
-        return comps
-
-
-@PBRTNodeTypes('texture')
-class PBRTNodeShaderNodeWrinkled(PBRTShaderNode):
-    bl_label = 'PBRT Wrinkled Texture'
-
-    class_type = 'PBRTNodeShaderNodeWrinkled'
-    shader_type = 'wrinkled'
-
-    octaves = bpy.props.IntProperty(name="octaves",
-                                    description="The maximum number of octaves of noise to use in spectral synthesis",
-                                    default=8,
-                                    soft_max=20,
-                                    min=1)
-
-    roughness = bpy.props.FloatProperty(name="roughness",
-                                        description="The 'bumpiness' of the resulting texture",
-                                        default=0.5,
-                                        max=1,
-                                        min=0)
-
-    def draw_buttons(self, context, layout: 'UILayout'):
-        layout.prop(self, 'octaves')
-        layout.prop(self, 'roughness')
-        super(PBRTShaderNodeSubsurface, self).draw_buttons(context, layout)
-
-    def get_data_dict(self):
-        data_dict = super(PBRTShaderNodeSubsurface, self).get_data_dict()
-        data_dict['params']['octaves'] = self.octaves
-        data_dict['params']['roughness'] = self.roughness
-        return data_dict
-
-    def export_comps(self, file_writer):
-        comps = super().export_comps(file_writer)
-        comps.append('"{} {}" {}'.format('integer', 'octaves', self.octaves))
-        comps.append('"{} {}" {}'.format('float', 'roughness', self.roughness))
-        return comps
-
-
-@PBRTNodeTypes('texture')
-class PBRTNodeShaderNodeMarble(PBRTShaderNode):
-    bl_label = 'PBRT Marble Texture'
-
-    class_type = 'PBRTNodeShaderNodeMarble'
-    shader_type = 'marble'
-
-    octaves = bpy.props.IntProperty(name="octaves",
-                                    description="The maximum number of octaves of noise to use in spectral synthesis",
-                                    default=8,
-                                    soft_max=20,
-                                    min=1)
-
-    roughness = bpy.props.FloatProperty(name="roughness",
-                                        description="The 'bumpiness' of the resulting texture",
-                                        default=0.5,
-                                        max=1,
-                                        min=0)
-
-    scale = bpy.props.FloatProperty(name="scale",
-                                    description="A scaling factor to apply to the noise function inputs",
+    uscale: bpy.props.FloatProperty(name="uscale",
+                                    description="Scaling factors to be applied to the u texture coordinates",
                                     default=1,
-                                    soft_max=20,
                                     min=0)
 
-    variation = bpy.props.FloatProperty(name="variation",
-                                        description="A scaling factor to apply to the noise function output",
-                                        default=0.2,
-                                        soft_max=5,
-                                        min=0)
+    vscale: bpy.props.FloatProperty(name="vscale",
+                                    description="Scaling factors to be applied to the v texture coordinates",
+                                    default=1,
+                                    min=0)
+
+    udelta: bpy.props.FloatProperty(name="udelta",
+                                    description="An offset to be applied to the u texture coordinates",
+                                    default=0)
+
+    vdelta: bpy.props.FloatProperty(name="vdelta",
+                                    description="An offset to be applied to the v texture coordinates",
+                                    default=0)
+
+    v1: bpy.props.FloatVectorProperty(name="v1",
+                                      description="Vector to define planar mapping",
+                                      default=(1, 0, 0))
+
+    v2: bpy.props.FloatVectorProperty(name="v2",
+                                      description="Vector to define planar mapping",
+                                      default=(0, 1, 0))
+
+    def init(self, context):
+        super(PBRTTextureNode, self).init(context)
+        self.outputs.new('NodeSocketColor', 'Shader')
 
     def draw_buttons(self, context, layout: 'UILayout'):
+        layout.prop(self, 'mapping')
+        if self.mapping in ('uv', 'planar'):
+            layout.prop(self, 'udelta')
+            layout.prop(self, 'vdelta')
+            if self.mapping == 'uv':
+                layout.prop(self, 'uscale')
+                layout.prop(self, 'vscale')
+            else:
+                layout.prop(self, 'v1')
+                layout.prop(self, 'v2')
+
+    def update_visibility(self, context):
+        self.udelta.enabled = self.mapping in ('uv', 'planar')
+        self.vdelta.enabled = self.mapping in ('uv', 'planar')
+
+    def get_data_dict(self):
+        data_dict = super(PBRTTextureNodeImageMap, self).get_data_dict()
+        data_dict['params']['mapping'] = self.mapping
+        if self.mapping in ('uv', 'planar'):
+            data_dict['params']['udelta'] = self.udelta
+            data_dict['params']['vdelta'] = self.vdelta
+            if self.mapping == 'uv':
+                data_dict['params']['uscale'] = self.uscale
+                data_dict['params']['vscale'] = self.vscale
+            else:
+                data_dict['params']['v1'] = (self.v1.x, self.v1.y, self.v1.z)
+                data_dict['params']['v2'] = (self.v2.x, self.v2.y, self.v2.z)
+        return data_dict
+
+    def export_comps(self, file_writer):
+        comps = super(PBRTTextureNode, self).export_comps(file_writer)
+        comps.append('"string mapping" "{}"'.format(self.mapping))
+        if self.mapping in ('uv', 'planar'):
+            comps.append('"float udelta" {}'.format(self.udelta))
+            comps.append('"float vdelta" {}'.format(self.vdelta))
+            if self.mapping == 'uv':
+                comps.append('"float uscale" {}'.format(self.uscale))
+                comps.append('"float vscale" {}'.format(self.vscale))
+            else:
+                comps.append('"vector v1" [{} {} {}]'.format(self.v1.x, self.v1.y, self.v1.z))
+                comps.append('"vector v2" [{} {} {}]'.format(self.v2.x, self.v2.y, self.v2.z))
+        return comps
+
+
+@PBRTNodeTypes('texture')
+class PBRTTextureNodeFbm(PBRTTextureNode):
+    bl_label = 'PBRT Fbm Texture'
+
+    class_type = 'PBRTTextureNodeFbm'
+    node_type = 'fbm'
+
+    octaves: bpy.props.IntProperty(name="octaves",
+                                   description="The maximum number of octaves of noise to use in spectral synthesis",
+                                   default=8,
+                                   soft_max=20,
+                                   min=1)
+
+    roughness: bpy.props.FloatProperty(name="roughness",
+                                       description="The 'bumpiness' of the resulting texture",
+                                       default=0.5,
+                                       max=1,
+                                       min=0)
+
+    mapping: bpy.props.EnumProperty(name="mapping",
+                                    items=[
+                                        ("uv", "UV", ""),
+                                        ("spherical", "Spherical", ""),
+                                        ("cylindrical", "Cylindrical", ""),
+                                        ("planar", "Planar", ""),
+                                    ],
+                                    default="uv")
+
+    uscale: bpy.props.FloatProperty(name="uscale",
+                                   description="Scaling factors to be applied to the u texture coordinates",
+                                   default=1,
+                                   min=0)
+
+    vscale: bpy.props.FloatProperty(name="vscale",
+                                    description="Scaling factors to be applied to the v texture coordinates",
+                                    default=1,
+                                    min=0)
+
+    udelta: bpy.props.FloatProperty(name="udelta",
+                                    description="An offset to be applied to the u texture coordinates",
+                                    default=0)
+
+    vdelta: bpy.props.FloatProperty(name="vdelta",
+                                    description="An offset to be applied to the v texture coordinates",
+                                    default=0)
+
+    v1: bpy.props.FloatVectorProperty(name="v1",
+                                      description="Vector to define planar mapping",
+                                      default=(1, 0, 0))
+
+    v2: bpy.props.FloatVectorProperty(name="v2",
+                                      description="Vector to define planar mapping",
+                                      default=(0, 1, 0))
+
+    def draw_buttons(self, context, layout: 'UILayout'):
+        layout.prop(self, 'mapping')
+        if self.mapping in ('uv', 'planar'):
+            layout.prop(self, 'udelta')
+            layout.prop(self, 'vdelta')
+            if self.mapping == 'uv':
+                layout.prop(self, 'uscale')
+                layout.prop(self, 'vscale')
+            else:
+                layout.prop(self, 'v1')
+                layout.prop(self, 'v2')
+
+        layout.prop(self, 'octaves')
+        layout.prop(self, 'roughness')
+
+    def get_data_dict(self):
+        data_dict = super(PBRTTextureNodeFbm, self).get_data_dict()
+        data_dict['params']['octaves'] = self.octaves
+        data_dict['params']['roughness'] = self.roughness
+        data_dict['params']['mapping'] = self.mapping
+        if self.mapping in ('uv', 'planar'):
+            data_dict['params']['udelta'] = self.udelta
+            data_dict['params']['vdelta'] = self.vdelta
+            if self.mapping == 'uv':
+                data_dict['params']['uscale'] = self.uscale
+                data_dict['params']['vscale'] = self.vscale
+            else:
+                data_dict['params']['v1'] = (self.v1.x, self.v1.y, self.v1.z)
+                data_dict['params']['v2'] = (self.v2.x, self.v2.y, self.v2.z)
+        return data_dict
+
+    def export_comps(self, file_writer):
+        comps = super().export_comps(file_writer)
+        comps.append('"integer octaves" {}'.format(self.octaves))
+        comps.append('"float roughness" {}'.format(self.roughness))
+        comps.append('"string mapping" "{}"'.format(self.mapping))
+        if self.mapping in ('uv', 'planar'):
+            comps.append('"float udelta" {}'.format(self.udelta))
+            comps.append('"float vdelta" {}'.format(self.vdelta))
+            if self.mapping == 'uv':
+                comps.append('"float uscale" {}'.format(self.uscale))
+                comps.append('"float vscale" {}'.format(self.vscale))
+            else:
+                comps.append('"vector v1" [{} {} {}]'.format(self.v1.x, self.v1.y, self.v1.z))
+                comps.append('"vector v2" [{} {} {}]'.format(self.v2.x, self.v2.y, self.v2.z))
+        return comps
+
+
+@PBRTNodeTypes('texture')
+class PBRTTextureNodeWrinkled(PBRTTextureNode):
+    bl_label = 'PBRT Wrinkled Texture'
+
+    class_type = 'PBRTTextureNodeWrinkled'
+    node_type = 'wrinkled'
+
+    octaves: bpy.props.IntProperty(name="octaves",
+                                   description="The maximum number of octaves of noise to use in spectral synthesis",
+                                   default=8,
+                                   soft_max=20,
+                                   min=1)
+
+    roughness: bpy.props.FloatProperty(name="roughness",
+                                       description="The 'bumpiness' of the resulting texture",
+                                       default=0.5,
+                                       max=1,
+                                       min=0)
+
+    mapping: bpy.props.EnumProperty(name="mapping",
+                                    items=[
+                                        ("uv", "UV", ""),
+                                        ("spherical", "Spherical", ""),
+                                        ("cylindrical", "Cylindrical", ""),
+                                        ("planar", "Planar", ""),
+                                    ],
+                                    default="uv")
+
+    uscale: bpy.props.FloatProperty(name="uscale",
+                                    description="Scaling factors to be applied to the u texture coordinates",
+                                    default=1,
+                                    min=0)
+
+    vscale: bpy.props.FloatProperty(name="vscale",
+                                    description="Scaling factors to be applied to the v texture coordinates",
+                                    default=1,
+                                    min=0)
+
+    udelta: bpy.props.FloatProperty(name="udelta",
+                                    description="An offset to be applied to the u texture coordinates",
+                                    default=0)
+
+    vdelta: bpy.props.FloatProperty(name="vdelta",
+                                    description="An offset to be applied to the v texture coordinates",
+                                    default=0)
+
+    v1: bpy.props.FloatVectorProperty(name="v1",
+                                      description="Vector to define planar mapping",
+                                      default=(1, 0, 0))
+
+    v2: bpy.props.FloatVectorProperty(name="v2",
+                                      description="Vector to define planar mapping",
+                                      default=(0, 1, 0))
+
+    def draw_buttons(self, context, layout: 'UILayout'):
+        layout.prop(self, 'mapping')
+        if self.mapping in ('uv', 'planar'):
+            layout.prop(self, 'udelta')
+            layout.prop(self, 'vdelta')
+            if self.mapping == 'uv':
+                layout.prop(self, 'uscale')
+                layout.prop(self, 'vscale')
+            else:
+                layout.prop(self, 'v1')
+                layout.prop(self, 'v2')
+
+        layout.prop(self, 'octaves')
+        layout.prop(self, 'roughness')
+        layout.prop(self, 'octaves')
+        layout.prop(self, 'roughness')
+
+    def get_data_dict(self):
+        data_dict = super(PBRTTextureNodeWrinkled, self).get_data_dict()
+        data_dict['params']['octaves'] = self.octaves
+        data_dict['params']['roughness'] = self.roughness
+        data_dict['params']['mapping'] = self.mapping
+        if self.mapping in ('uv', 'planar'):
+            data_dict['params']['udelta'] = self.udelta
+            data_dict['params']['vdelta'] = self.vdelta
+            if self.mapping == 'uv':
+                data_dict['params']['uscale'] = self.uscale
+                data_dict['params']['vscale'] = self.vscale
+            else:
+                data_dict['params']['v1'] = (self.v1.x, self.v1.y, self.v1.z)
+                data_dict['params']['v2'] = (self.v2.x, self.v2.y, self.v2.z)
+        return data_dict
+
+    def export_comps(self, file_writer):
+        comps = super().export_comps(file_writer)
+        comps.append('"integer octaves" {}'.format(self.octaves))
+        comps.append('"float roughness" {}'.format(self.roughness))
+        comps.append('"string mapping" "{}"'.format(self.mapping))
+        if self.mapping in ('uv', 'planar'):
+            comps.append('"float udelta" {}'.format(self.udelta))
+            comps.append('"float vdelta" {}'.format(self.vdelta))
+            if self.mapping == 'uv':
+                comps.append('"float uscale" {}'.format(self.uscale))
+                comps.append('"float vscale" {}'.format(self.vscale))
+            else:
+                comps.append('"vector v1" [{} {} {}]'.format(self.v1.x, self.v1.y, self.v1.z))
+                comps.append('"vector v2" [{} {} {}]'.format(self.v2.x, self.v2.y, self.v2.z))
+        return comps
+
+
+@PBRTNodeTypes('texture')
+class PBRTTextureNodeMarble(PBRTTextureNode):
+    bl_label = 'PBRT Marble Texture'
+
+    class_type = 'PBRTTextureNodeMarble'
+    node_type = 'marble'
+
+    octaves: bpy.props.IntProperty(name="octaves",
+                                   description="The maximum number of octaves of noise to use in spectral synthesis",
+                                   default=8,
+                                   soft_max=20,
+                                   min=1)
+
+    roughness: bpy.props.FloatProperty(name="roughness",
+                                       description="The 'bumpiness' of the resulting texture",
+                                       default=0.5,
+                                       max=1,
+                                       min=0)
+
+    scale: bpy.props.FloatProperty(name="scale",
+                                   description="A scaling factor to apply to the noise function inputs",
+                                   default=1,
+                                   soft_max=20,
+                                   min=0)
+
+    variation: bpy.props.FloatProperty(name="variation",
+                                       description="A scaling factor to apply to the noise function output",
+                                       default=0.2,
+                                       soft_max=5,
+                                       min=0)
+
+    mapping: bpy.props.EnumProperty(name="mapping",
+                                    items=[
+                                        ("uv", "UV", ""),
+                                        ("spherical", "Spherical", ""),
+                                        ("cylindrical", "Cylindrical", ""),
+                                        ("planar", "Planar", ""),
+                                    ],
+                                    default="uv")
+
+    uscale: bpy.props.FloatProperty(name="uscale",
+                                    description="Scaling factors to be applied to the u texture coordinates",
+                                    default=1,
+                                    min=0)
+
+    vscale: bpy.props.FloatProperty(name="vscale",
+                                    description="Scaling factors to be applied to the v texture coordinates",
+                                    default=1,
+                                    min=0)
+
+    udelta: bpy.props.FloatProperty(name="udelta",
+                                    description="An offset to be applied to the u texture coordinates",
+                                    default=0)
+
+    vdelta: bpy.props.FloatProperty(name="vdelta",
+                                    description="An offset to be applied to the v texture coordinates",
+                                    default=0)
+
+    v1: bpy.props.FloatVectorProperty(name="v1",
+                                      description="Vector to define planar mapping",
+                                      default=(1, 0, 0))
+
+    v2: bpy.props.FloatVectorProperty(name="v2",
+                                      description="Vector to define planar mapping",
+                                      default=(0, 1, 0))
+
+    def draw_buttons(self, context, layout: 'UILayout'):
+        layout.prop(self, 'mapping')
+        if self.mapping in ('uv', 'planar'):
+            layout.prop(self, 'udelta')
+            layout.prop(self, 'vdelta')
+            if self.mapping == 'uv':
+                layout.prop(self, 'uscale')
+                layout.prop(self, 'vscale')
+            else:
+                layout.prop(self, 'v1')
+                layout.prop(self, 'v2')
+
         layout.prop(self, 'octaves')
         layout.prop(self, 'roughness')
         layout.prop(self, 'scale')
         layout.prop(self, 'variation')
-        super(PBRTShaderNodeSubsurface, self).draw_buttons(context, layout)
 
     def get_data_dict(self):
-        data_dict = super(PBRTShaderNodeSubsurface, self).get_data_dict()
+        data_dict = super().get_data_dict()
         data_dict['params']['octaves'] = self.octaves
         data_dict['params']['roughness'] = self.roughness
         data_dict['params']['scale'] = self.scale
         data_dict['params']['variation'] = self.variation
+        data_dict['params']['mapping'] = self.mapping
+        if self.mapping in ('uv', 'planar'):
+            data_dict['params']['udelta'] = self.udelta
+            data_dict['params']['vdelta'] = self.vdelta
+            if self.mapping == 'uv':
+                data_dict['params']['uscale'] = self.uscale
+                data_dict['params']['vscale'] = self.vscale
+            else:
+                data_dict['params']['v1'] = (self.v1.x, self.v1.y, self.v1.z)
+                data_dict['params']['v2'] = (self.v2.x, self.v2.y, self.v2.z)
         return data_dict
 
     def export_comps(self, file_writer):
         comps = super().export_comps(file_writer)
-        comps.append('"{} {}" {}'.format('integer', 'octaves', self.octaves))
-        comps.append('"{} {}" {}'.format('float', 'roughness', self.roughness))
-        comps.append('"{} {}" {}'.format('float', 'scale', self.scale))
-        comps.append('"{} {}" {}'.format('float', 'variation', self.variation))
+        comps.append('"integer octaves" {}'.format(self.octaves))
+        comps.append('"float roughness" {}'.format(self.roughness))
+        comps.append('"float scale" {}'.format(self.scale))
+        comps.append('"float variation" {}'.format(self.variation))
+        comps.append('"string mapping" "{}"'.format(self.mapping))
+        if self.mapping in ('uv', 'planar'):
+            comps.append('"float udelta" {}'.format(self.udelta))
+            comps.append('"float vdelta" {}'.format(self.vdelta))
+            if self.mapping == 'uv':
+                comps.append('"float uscale" {}'.format(self.uscale))
+                comps.append('"float vscale" {}'.format(self.vscale))
+            else:
+                comps.append('"vector v1" [{} {} {}]'.format(self.v1.x, self.v1.y, self.v1.z))
+                comps.append('"vector v2" [{} {} {}]'.format(self.v2.x, self.v2.y, self.v2.z))
         return comps
 
 
