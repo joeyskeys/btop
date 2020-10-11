@@ -14,27 +14,23 @@ After installing the addon, setup pbrt executable and cache folder in the addon 
 
 Please note that this addon doesn't provide pbrt executable by itself, it just converts the blender scene into pbrt cache file and then invoke the pbrt command to render the image.
 
+By default this addon uses pbrt-v3 but an option to use v4 is also provided in the preferences. Currently it will convert the v3 scene file to the v4 version with the upgrade option provided by the v4 executable but still some bugs there.
+
 ### Features
 
-  - Renderer options
+  - Most attributes are supported in the editor
   
-  ![renderer options](https://github.com/joeyskeys/btop/blob/master/resources/renderer_option.png)
+  - Complete shader graph support
   
-  - Film options
-  
-  ![film options](https://github.com/joeyskeys/btop/blob/master/resources/film_option.png)
-  
-  - World options
-  
-  ![world options](https://github.com/joeyskeys/btop/blob/master/resources/world_option.png)
+  - Auto render output display
 
-  - Materials
+![render output](https://github.com/joeyskeys/btop/blob/master/resources/preference.png)
 
-  ![materials](https://github.com/joeyskeys/btop/blob/master/resources/material.png)
+### Area light support
 
-  - Render output
+Area light currently can only use triangle mesh in the scene as its geometry(Procedual shape support will come soon).
 
-  ![output](https://github.com/joeyskeys/btop/blob/master/resources/output.png)
+![area light](https://github.com/joeyskeys/btop/blob/master/resources/area_light.png)
 
 ### Bugs & feedback
 Please note this addon is still in development and there might be some bugs. Open an issue if you find one or you can send your PR directly.
