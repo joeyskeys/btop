@@ -74,7 +74,6 @@ class PBRT_PT_light(bpy.types.Panel):
         elif light.type == "AREA":
             layout.row().prop(light_props, "twosided")
             layout.row().prop(light_props, "samples")
-            #layout.prop_search(light, "area_light_geometry", bpy.data, "objects")
             layout.row().prop(light_props, "geometry")
 
 

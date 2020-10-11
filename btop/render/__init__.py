@@ -44,11 +44,13 @@ class PBRTRenderEngine(bpy.types.RenderEngine):
         pref = get_pref()
         pbrt_executable = pref.pbrt_location
         cache_folder = pref.pbrt_cache_folder
+        use_v4 = pref.pbrt_use_v4
 
         # Setup output file name
         # todo : decide output file type with an user option
         filename = os.path.basename(bpy.data.filepath) or 'tmp.blend'
         cache_filepath = os.path.join(cache_folder, filename.replace('.blend', '.pbrt'))
+        converted_cache_filepath = os.path.join(cache_folder, filename.replace('.blend', '_converted.pbrt'))
         outfile = os.path.join(cache_folder, filename.replace('.blend', '.exr'))
 
         # Get film resolution from camera attributes
@@ -60,9 +62,16 @@ class PBRTRenderEngine(bpy.types.RenderEngine):
         exporter.export(cache_filepath)
 
         try:
-            #subprocess.call([pbrt_executable, '--outfile', outfile, cache_filepath])
-            cmd_comps = [pbrt_executable, '--outfile', outfile, cache_filepath]
-            print('command is : ', ' '.join(cmd_comps))
+            cmd_comps = [pbrt_executable, '--outfile', outfile]
+            if use_v4:
+                convert_cmd_comps = [pbrt_executable, '--upgrade', cache_filepath, '>', converted_cache_filepath]
+                print('Convert command : ', ' '.join(convert_cmd_comps))
+                os.system(' '.join(convert_cmd_comps))
+                cmd_comps.append(converted_cache_filepath)
+            else:
+                cmd_comps.append(cache_filepath)
+
+            print('Render command : ', ' '.join(cmd_comps))
             os.system(' '.join(cmd_comps))
 
             # Load rendered picture and display it in the viewport

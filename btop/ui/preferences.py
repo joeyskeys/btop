@@ -37,11 +37,16 @@ class PBRTPreferences(bpy.types.AddonPreferences):
                                                 default=os.path.join(os.path.expanduser("~"), 'pbrt_scene'),
                                                 subtype='FILE_PATH')
 
+    pbrt_use_v4: bpy.props.BoolProperty(name="pbrt_use_v4",
+                                        description="Use version 4 pbrt binary",
+                                        default=False)
+
     def draw(self, context):
         layout = self.layout
 
         layout.row().prop(self, 'pbrt_location', text="PBRT location")
         layout.row().prop(self, 'pbrt_cache_folder', text="Cache Folder")
+        layout.row().prop(self, 'pbrt_use_v4', text="Use Version 4")
 
 
 def get_pref():
