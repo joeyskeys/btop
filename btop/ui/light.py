@@ -24,19 +24,6 @@ class PBRTLightProperties(bpy.types.PropertyGroup):
                                          default=1,
                                          min=0)
 
-    # Spot light props
-    coneangle: bpy.props.FloatProperty(name="coneangle",
-                                       description="The angle that the spotlight's cone makes with its primary axis",
-                                       default=30,
-                                       min=0,
-                                       max=180)
-
-    conedeltaangle: bpy.props.FloatProperty(name="conedeltaangle",
-                                            description="The angle at which the spotlight intensity begins to fall off at the edges",
-                                            default=5,
-                                            min=0,
-                                            max=90)
-
     # Area light props
     twosided: bpy.props.BoolProperty(name="twosided",
                                      description="Determines whether the light source emits light from just the side of the surface where the surface normal points or both sides",
@@ -69,19 +56,16 @@ class PBRT_PT_light(bpy.types.Panel):
         layout.prop(light, "type", expand=True)
         layout.prop(light, "color")
 
-        col = layout.column()
-        row = layout.row()
-
         light_props = light.pbrt_light_props
 
-        row.prop(light_props, "scale")
+        layout.row().prop(light_props, "scale")
 
         if light.type == "SPOT":
-            row.prop(light_props, "coneangle")
-            row.prop(light_props, "conedeltaangle")
+            layout.row().prop(light, "spot_size")
+            layout.row().prop(light, "spot_blend")
         elif light.type == "AREA":
-            row.prop(light_props, "twosided")
-            row.prop(light_props, "samples")
+            layout.row().prop(light_props, "twosided")
+            layout.row().prop(light_props, "samples")
 
 
 def register():

@@ -21,6 +21,7 @@ from . import world
 from . import sampler
 from . import integrator
 from . import material
+from . import light
 from . import preferences
 
 
@@ -31,6 +32,7 @@ def register():
     sampler.register()
     integrator.register()
     material.register()
+    light.register()
     preferences.register()
 
 
@@ -41,4 +43,5 @@ def unregister():
     sampler.unregister()
     integrator.unregister()
     material.unregister()
+    light.unregister()
     preferences.unregister()

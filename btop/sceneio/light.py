@@ -33,10 +33,19 @@ class LightIO(object):
         for object in bpy.data.objects:
             if object.type == 'LIGHT':
                 light_type = object.data.type
-                light_line_comps = ['LightSource']
+
+                if light_type in ('POINT', 'SUN', 'SPOT'):
+                    light_line_comps = ['LightSource']
+                elif light_type == 'AREA':
+                    raise Exception('Area light not supported yet')
+                    light_line_comps = ['\t', 'AreaLightSource "diffuse"']
+                else:
+                    raise Exception('light type {} not supported'.format(light_type))
+
                 light_color = object.data.color
                 light_location = object.location
                 light_location_tuple = light_location.to_tuple()
+                light_props = object.data.pbrt_light_props
 
                 if light_type == 'POINT':
                     light_line_comps.append('"point"')
@@ -65,8 +74,10 @@ class LightIO(object):
                         spot_size, spot_blend
                     ))
 
-                else:
-                    raise Exception('light type {} not supported'.format(light_type))
+                elif light_type == "AREA":
+                    pass
+
+                light_line_comps.append('"float scale" {}'.format(light_props.scale))
 
                 writer.write(' '.join(light_line_comps) + '\n\n')
 
