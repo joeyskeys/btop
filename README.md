@@ -24,7 +24,7 @@ By default this addon uses pbrt-v3 but an option to use v4 is also provided in t
   
   - Auto render output display
 
-![render output](https://github.com/joeyskeys/btop/blob/master/resources/preference.png)
+![render output](https://github.com/joeyskeys/btop/blob/master/resources/output.png)
 
 ### Area light support
 
