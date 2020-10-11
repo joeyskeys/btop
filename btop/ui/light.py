@@ -34,6 +34,14 @@ class PBRTLightProperties(bpy.types.PropertyGroup):
                                    default=1,
                                    min=1)
 
+    def object_poll(self, object):
+        return object.type == 'MESH'
+
+    geometry: bpy.props.PointerProperty(name="geometry",
+                                        type=bpy.types.Object,
+                                        description="The geometry used to specify the shape of area light",
+                                        poll=object_poll)
+
 
 class PBRT_PT_light(bpy.types.Panel):
     bl_label = "Light"
@@ -66,6 +74,8 @@ class PBRT_PT_light(bpy.types.Panel):
         elif light.type == "AREA":
             layout.row().prop(light_props, "twosided")
             layout.row().prop(light_props, "samples")
+            #layout.prop_search(light, "area_light_geometry", bpy.data, "objects")
+            layout.row().prop(light_props, "geometry")
 
 
 def register():

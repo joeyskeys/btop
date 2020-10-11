@@ -40,7 +40,7 @@ class SceneIO(object):
 
         for object in bpy.data.objects:
 
-            if object.type == 'MESH':
+            if object.type == 'MESH' and object not in self.lightio.area_light_geometries:
                 writer.write('AttributeBegin\n')
                 self.materialio.write_to_file(writer, object)
                 self.meshio.write_to_file(writer, object)

@@ -20,6 +20,8 @@ import mathutils
 
 import math
 
+from .mesh import get_mesh_comps
+
 
 class LightIO(object):
     """
@@ -27,9 +29,12 @@ class LightIO(object):
     """
 
     def __init__(self):
-        pass
+        self.area_light_geometries = []
 
     def write_to_file(self, writer):
+        # Clear area light geometry cache before each light export
+        self.area_light_geometries = []
+
         for object in bpy.data.objects:
             if object.type == 'LIGHT':
                 light_type = object.data.type
@@ -37,7 +42,6 @@ class LightIO(object):
                 if light_type in ('POINT', 'SUN', 'SPOT'):
                     light_line_comps = ['LightSource']
                 elif light_type == 'AREA':
-                    raise Exception('Area light not supported yet')
                     light_line_comps = ['\t', 'AreaLightSource "diffuse"']
                 else:
                     raise Exception('light type {} not supported'.format(light_type))
@@ -46,6 +50,8 @@ class LightIO(object):
                 light_location = object.location
                 light_location_tuple = light_location.to_tuple()
                 light_props = object.data.pbrt_light_props
+                area_light_pre_comps = []
+                area_light_post_comps = []
 
                 if light_type == 'POINT':
                     light_line_comps.append('"point"')
@@ -75,11 +81,26 @@ class LightIO(object):
                     ))
 
                 elif light_type == "AREA":
-                    pass
+                    meshobj = light_props.geometry
+                    if meshobj:
+                        area_light_pre_comps.append('AttributeBegin')
+                        light_line_comps.append('"rgb L" [{} {} {}]'.format(light_color.r, light_color.g, light_color.b))
+                        light_line_comps.append('"bool twosided" "{}" \
+                            "integer samples" {}'.format('true' if light_props.twosided else 'false',
+                            light_props.samples))
+                        area_light_post_comps += get_mesh_comps(meshobj, 1)
+                        area_light_post_comps.append('AttributeEnd')
+                        self.area_light_geometries.append(meshobj)
+                    else:
+                        # Area light illegal
+                        continue
 
-                light_line_comps.append('"float scale" {}'.format(light_props.scale))
-
-                writer.write(' '.join(light_line_comps) + '\n\n')
+                if light_type == "AREA":
+                    area_light_pre_comps.append(' '.join(light_line_comps))
+                    writer.write('\n'.join(area_light_pre_comps + area_light_post_comps) + '\n\n')
+                else:
+                    light_line_comps.append('"float scale" {}'.format(light_props.scale))
+                    writer.write(' '.join(light_line_comps) + '\n\n')
 
         world_props = bpy.context.scene.pbrt_world_props
         light_line_comps = ['LightSource "infinite"']
