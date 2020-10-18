@@ -54,19 +54,29 @@ class LightIO(object):
                 area_light_post_comps = []
 
                 if light_type == 'POINT':
-                    light_line_comps.append('"point"')
-                    light_line_comps.append('"rgb I" [{} {} {}] "point from" [{} {} {}]'.format(
-                        light_color.r, light_color.g, light_color.b, *light_location_tuple
-                    ))
+                    if light_props.isgoniometric:
+                        light_line_comps.append('"goniometric" "rgb I" [{} {} {}] "string mapname" "{}"'.format(
+                            light_color.r, light_color.g, light_color.b, light_props.mapname
+                        ))
+                    else:
+                        light_line_comps.append('"point"')
+                        light_line_comps.append('"rgb I" [{} {} {}] "point from" [{} {} {}]'.format(
+                            light_color.r, light_color.g, light_color.b, *light_location_tuple
+                        ))
 
                 elif light_type == 'SUN':
-                    light_line_comps.append('"distant"')
-                    light_rotation = object.matrix_world.to_quaternion()
-                    light_direction = light_location + mathutils.Vector((0, 0, -1)).rotate(light_rotation)
-                    light_direction_tuple = light_direction.to_tuple()
-                    light_line_comps.append('"rgb L" [{} {} {}] "point from" [{} {} {}] "point to" [{} {} {}]'.format(
-                        light_color.r, light_color.g, light_color.b, *light_location_tuple, *light_direction_tuple
-                    ))
+                    if light_props.isprojection:
+                        light_line_comps.append('"projection" "rgb I" [{} {} {}] "string mapname" "{}"').format(
+                            light_color.r, light_color.g, light_color.b, light_props.mapname
+                        )
+                    else:
+                        light_line_comps.append('"distant"')
+                        light_rotation = object.matrix_world.to_quaternion()
+                        light_direction = light_location + mathutils.Vector((0, 0, -1)).rotate(light_rotation)
+                        light_direction_tuple = light_direction.to_tuple()
+                        light_line_comps.append('"rgb L" [{} {} {}] "point from" [{} {} {}] "point to" [{} {} {}]'.format(
+                            light_color.r, light_color.g, light_color.b, *light_location_tuple, *light_direction_tuple
+                        ))
 
                 elif light_type == 'SPOT':
                     light_rotation = object.matrix_world.to_quaternion()

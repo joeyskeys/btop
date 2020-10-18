@@ -20,9 +20,9 @@ import bpy
 
 class PBRTLightProperties(bpy.types.PropertyGroup):
     scale: bpy.props.FloatProperty(name="scale",
-                                         description="Scale factor that modulates the amount of light that the light source emits into the scene",
-                                         default=1,
-                                         min=0)
+                                   description="Scale factor that modulates the amount of light that the light source emits into the scene",
+                                   default=1,
+                                   min=0)
 
     # Area light props
     twosided: bpy.props.BoolProperty(name="twosided",
@@ -41,6 +41,27 @@ class PBRTLightProperties(bpy.types.PropertyGroup):
                                         type=bpy.types.Object,
                                         description="The geometry used to specify the shape of area light",
                                         poll=object_poll)
+
+    # Goniometric light props
+    isgoniometric: bpy.props.BoolProperty(name="isgoniometric",
+                                          description="A bool property to determine whether a point light is a goniometric one",
+                                          default=False)
+
+    mapname: bpy.props.StringProperty(name="mapname",
+                                      description="The filename of the image file that stores a goniometric diagram to use for the lighting distribution",
+                                      default="",
+                                      subtype="FILE_PATH")
+
+    # Porjection light props
+    isprojection: bpy.props.BoolProperty(name="isprojection",
+                                         description="A bool property to determine wheter a distant light is a projection one",
+                                         default=False)
+
+    fov: bpy.props.FloatProperty(name="fov",
+                                 description="The spread angle of the projected light, along the shorter image axis",
+                                 default=45,
+                                 min=1,
+                                 max=90)
 
 
 class PBRT_PT_light(bpy.types.Panel):
@@ -66,7 +87,8 @@ class PBRT_PT_light(bpy.types.Panel):
 
         light_props = light.pbrt_light_props
 
-        layout.row().prop(light_props, "scale")
+        if light.type != "AREA":
+            layout.row().prop(light_props, "scale")
 
         if light.type == "SPOT":
             layout.row().prop(light, "spot_size")
@@ -75,6 +97,15 @@ class PBRT_PT_light(bpy.types.Panel):
             layout.row().prop(light_props, "twosided")
             layout.row().prop(light_props, "samples")
             layout.row().prop(light_props, "geometry")
+        elif light.type == "POINT":
+            layout.row().prop(light_props, "isgoniometric")
+            if light_props.isgoniometric:
+                layout.row().prop(light_props, "mapname")
+        elif light.type == "SUN":
+            layout.row().prop(light_props, "isprojection")
+            if light_props.isprojection:
+                layout.row().prop(light_props, "fov")
+                layout.row().prop(light_props, "mapname")
 
 
 def register():
