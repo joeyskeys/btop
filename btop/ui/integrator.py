@@ -25,7 +25,10 @@ class PBRTIntegratorProperties(bpy.types.PropertyGroup):
                                                 ("directlighting", "DirectLighting", ""),
                                                 ("mlt", "MLT", ""),
                                                 ("sppm", "SPPM", ""),
-                                                ("whited", "Whited", "")],
+                                                ("whited", "Whited", ""),
+                                                ("tof_path", "ToF Path", ""),
+                                                ("tof_bdpt", "ToF BDPT", ""),
+                                                ("tof_mlt", "ToF MLT", ""),],
                                             default="path")
 
     # Path integrator parameters
@@ -144,6 +147,19 @@ class PBRTIntegratorProperties(bpy.types.PropertyGroup):
                                     soft_max=10,
                                     min=0)
 
+    # ToF properties
+    depthrange: bpy.props.FloatProperty(name="depthrange",
+                                        description="Depth range of the scene being rendered",
+                                        default=400,
+                                        soft_max=1000,
+                                        min=0)
+    
+    tofType: bpy.props.IntProperty(name="tofType",
+                                    description="Time of Flight camera type",
+                                    default=0,
+                                    soft_max=0,
+                                    min=0)
+
 
 class PBRT_PT_integrator(bpy.types.Panel):
     bl_label = "Integrator"
@@ -166,26 +182,26 @@ class PBRT_PT_integrator(bpy.types.Panel):
         layout.row().prop(integrator_props, "integrator_type", text="Integrator Type")
         layout.row().prop(integrator_props, "max_depth", text="Max Depth")
 
-        if integrator_type in ["path", "directlighting", "bdpt"]:
+        if integrator_type in ["path", "directlighting", "bdpt", "tof_path", "tof_bdpt"]:
             layout.row().prop(integrator_props, "pixelbound_x_min", text="Pixelbound X Min")
             layout.row().prop(integrator_props, "pixelbound_x_max", text="Pixelbound X Max")
             layout.row().prop(integrator_props, "pixelbound_y_min", text="Pixelbound Y Min")
             layout.row().prop(integrator_props, "pixelbound_y_max", text="Pixelbound Y Max")
 
-        if integrator_type in ["path", "bdpt"]:
+        if integrator_type in ["path", "bdpt", "tof_path", "tof_bdpt"]:
             layout.row().prop(integrator_props, "light_sample_strategy", text="Light Sample Strategy")
 
-        if integrator_type == "path":
+        if integrator_type in ["path", "tof_path"]:
             layout.row().prop(integrator_props, "rr_threshold", text="RR Threshold")
 
         if integrator_type == "directlightingg":
             layout.row().prop(integrator_props, "strategy", text="Strategy")
 
-        if integrator_type == "bdpt":
+        if integrator_type in ["bdpt", "tof_bdpt"]:
             layout.row().prop(integrator_props, "visualize_strategies", text="Visualize Strategies")
             layout.row().prop(integrator_props, "visualize_weights", text="Visualize Weights")
 
-        if integrator_type == "mlt":
+        if integrator_type in ["mlt", "tof_mlt"]:
             layout.row().prop(integrator_props, "bootstrap_samples", text="Bootstrap Samples")
             layout.row().prop(integrator_props, "chains", text="Chains")
             layout.row().prop(integrator_props, "mutations_per_pixel", text="Mutations Per Pixel")
@@ -198,6 +214,9 @@ class PBRT_PT_integrator(bpy.types.Panel):
             layout.row().prop(integrator_props, "image_write_frequency", text="Image Write Frequency")
             layout.row().prop(integrator_props, "radius", text="Radius")
 
+        if integrator_type in ["tof_path", "tof_bdpt", "tof_mlt"]:
+            layout.row().prop(integrator_props, "depthrange", text="Depth range in the scene") 
+            layout.row().prop(integrator_props, "tofType", text="ToF type")
 
 def register():
     # Register property group

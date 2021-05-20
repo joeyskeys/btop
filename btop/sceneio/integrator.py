@@ -74,6 +74,14 @@ class IntegratorIO(object):
             integrator_line_comps.append('"integer imagewritefrequency" {}'.format(integrator_props.image_write_frequency))
             integrator_line_comps.append('"float radius" {}'.format(integrator_props.radius))
 
+        if integrator_type in ["tof_path", "tof_bdpt", "tof_mlt"]:
+            integrator_line_comps.append('"float depthrange" {}'.format(integrator_props.depthrange))
+            integrator_line_comps.append('"integer tofType" {}'.format(integrator_props.tofType))
+
+        if integrator_type == "tof_mlt":
+            integrator_line_comps.append('"integer mutationsperpixel" {}'.format(integrator_props.mutations_per_pixel))
+
+
         writer.write(' '.join(integrator_line_comps) + '\n\n')
 
     def read_from_file(self, parser):

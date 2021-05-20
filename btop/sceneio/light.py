@@ -72,20 +72,24 @@ class LightIO(object):
                     else:
                         light_line_comps.append('"distant"')
                         light_rotation = object.matrix_world.to_quaternion()
-                        light_direction = light_location + mathutils.Vector((0, 0, -1)).rotate(light_rotation)
+                        temp_vec = mathutils.Vector((0, 0, -1))
+                        temp_vec.rotate(light_rotation)
+                        light_direction = light_location + temp_vec
                         light_direction_tuple = light_direction.to_tuple()
                         light_line_comps.append('"rgb L" [{} {} {}] "point from" [{} {} {}] "point to" [{} {} {}]'.format(
                             light_color.r, light_color.g, light_color.b, *light_location_tuple, *light_direction_tuple
                         ))
 
                 elif light_type == 'SPOT':
+                    light_line_comps.append('"spot"')
                     light_rotation = object.matrix_world.to_quaternion()
-                    light_direction = light_location + mathutils.Vector((0, 0, -1)).rotate(light_rotation)
+                    temp_vec = mathutils.Vector((0, 0, -1))
+                    temp_vec.rotate(light_rotation)
+                    light_direction = light_location + temp_vec
                     light_direction_tuple = light_direction.to_tuple()
                     spot_size = object.data.spot_size / math.pi * 180
                     spot_blend = object.data.spot_blend * spot_size
-                    light_line_comps.append('"rgb I" [{} {} {}] "point from" [{} {} {}] "point to" [{} {} {}] \
-                                             "float coneangle" {} "float conedeltaangle" {}'.format(
+                    light_line_comps.append('"rgb I" [{} {} {}] "point from" [{} {} {}] "point to" [{} {} {}] "float coneangle" {} "float conedeltaangle" {}'.format(
                         light_color.r, light_color.g, light_color.b, *light_location_tuple, *light_direction_tuple,
                         spot_size, spot_blend
                     ))
@@ -95,9 +99,7 @@ class LightIO(object):
                     if meshobj:
                         area_light_pre_comps.append('AttributeBegin')
                         light_line_comps.append('"rgb L" [{} {} {}]'.format(light_color.r, light_color.g, light_color.b))
-                        light_line_comps.append('"bool twosided" "{}" \
-                            "integer samples" {}'.format('true' if light_props.twosided else 'false',
-                            light_props.samples))
+                        light_line_comps.append('"bool twosided" "{}" "integer samples" {}'.format('true' if light_props.twosided else 'false', light_props.samples))
                         area_light_post_comps += get_mesh_comps(meshobj, 1)
                         area_light_post_comps.append('AttributeEnd')
                         self.area_light_geometries.append(meshobj)
@@ -109,7 +111,7 @@ class LightIO(object):
                     area_light_pre_comps.append(' '.join(light_line_comps))
                     writer.write('\n'.join(area_light_pre_comps + area_light_post_comps) + '\n\n')
                 else:
-                    light_line_comps.append('"float scale" {}'.format(light_props.scale))
+                    light_line_comps.append('"spectrum scale" [{} {}]'.format(light_props.scale, light_props.scale))
                     writer.write(' '.join(light_line_comps) + '\n\n')
 
         world_props = bpy.context.scene.pbrt_world_props
