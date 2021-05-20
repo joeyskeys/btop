@@ -1,3 +1,8 @@
+# btop-tof
+
+Fork of btop. Adds support for Ben Attal's time-of-flight integrator to allow simulations of time of flight cameras.
+
+
 # btop
 
 btop is a blender(2.8 and above) addon for PBRT.
