@@ -33,6 +33,7 @@ class SceneIO(object):
         self.lightio = LightIO()
 
     def write_to_file(self, writer):
+
         writer.write('WorldBegin\n\n')
 
         # Light should be written in the world block

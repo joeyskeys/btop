@@ -2,6 +2,10 @@
 
 Fork of btop. Adds support for Ben Attal's time-of-flight integrator to allow simulations of time of flight cameras.
 
+Odd behaviour that James thought he should note:
+- Textures - the process to generate UVs is very memory and scene-declaration inefficient; see notes in code.
+- Textures - the code to triangulate a mesh is also a bit silly with the data structures, but it works for now.
+
 
 # btop
 

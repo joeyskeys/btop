@@ -48,10 +48,10 @@ class PBRT_PT_materialslots(bpy.types.Panel):
             row.template_list("MATERIAL_UL_matslots", "", obj, "material_slots", obj, "active_material_index", rows=rows)
 
             col = row.column(align=True)
-            col.operator("object.material_slot_add", icon='ZOOMIN', text="")
-            col.operator("object.material_slot_remove", icon="ZOOMOUT", text="")
+            col.operator("object.material_slot_add", icon='ZOOM_IN', text="")
+            col.operator("object.material_slot_remove", icon="ZOOM_OUT", text="")
 
-            col.menu("MATERIAL_MT_specials", icon="DOWNARROW_HLT", text="")
+            col.menu("MATERIAL_MT_context_menu", icon="DOWNARROW_HLT", text="")
 
             if is_sortable:
                 col.separator()
@@ -65,7 +65,7 @@ class PBRT_PT_materialslots(bpy.types.Panel):
                 row.operator("object.material_slot_select", text="Select")
                 row.operator("object.material_slot_deselect", text="Deselect")
 
-        split = layout.split(percentage=0.65)
+        split = layout.split(factor=0.65)
 
         if obj:
             split.template_ID(obj, "active_material", new="material.new")

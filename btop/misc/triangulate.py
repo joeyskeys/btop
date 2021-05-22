@@ -82,6 +82,28 @@ def triangulate_a_quat(verts, vert_indices):
         return [(vert_indices[0], vert_indices[1], vert_indices[3]),
                 (vert_indices[3], vert_indices[1], vert_indices[2])]
 
+def triangulate_a_quat_UV(verts, uvs, new_polyvert_idx):
+    diagonal_a = (verts[0] - verts[2]).length
+    diagonal_b = (verts[1] - verts[3]).length
+
+    if diagonal_a < diagonal_b:
+        new_verts = [(verts[0], verts[1], verts[2]),
+                (verts[0], verts[2], verts[3])]
+        new_uvs = [(uvs[0], uvs[1], uvs[2]),
+                (uvs[0], uvs[2], uvs[3])]
+        tri_vert_indx = [(new_polyvert_idx+0, new_polyvert_idx+1, new_polyvert_idx+2),
+                (new_polyvert_idx+3, new_polyvert_idx+4, new_polyvert_idx+5)]
+        
+        return new_verts, new_uvs, tri_vert_indx
+    else:
+        new_verts = [(verts[0], verts[1], verts[3]),
+                (verts[3], verts[1], verts[2])]
+        new_uvs = [(uvs[0], uvs[1], uvs[3]),
+                (uvs[3], uvs[1], uvs[2])]
+        tri_vert_indx = [(new_polyvert_idx+0, new_polyvert_idx+1, new_polyvert_idx+2),
+                (new_polyvert_idx+3, new_polyvert_idx+4, new_polyvert_idx+5)]
+        
+        return new_verts, new_uvs, tri_vert_indx
 
 def triangulate_a_ngon(verts, vert_indices):
     normal = get_normal(verts)
@@ -143,7 +165,93 @@ def triangulate_a_ngon(verts, vert_indices):
 
     return new_triangles
 
+#
+# 2021-05-21 James Tompkin
+#
+# pbrt only supports one set of uv coordinates per vertex.
+# It does not support vertices with multiple uv coordinates
+# Or, put another way, uv coordinates per polygon.
+# 
+# This restricts UV maps with cuts in the unwrapping.
+# As such, we have to duplicate vertices and give them unique
+# UVs for each triangle, and then re-arrange the polygon indices
+#
+# So, we're making a new function to do this.
+#
+def triangulateUV(obj):
+    obj_data = obj.data
+    vert_objs = obj_data.vertices
+    uv_objs = obj_data.uv_layers[0].data
+    polygon_objs = obj_data.polygons
 
+    ################
+    # Collect all vert coordinates and uv coordinates into lists
+    # to make them easier to index into
+    ################
+    verts = []
+    for vert_obj in vert_objs:
+        verts.append(vert_obj.co)
+
+    uvs = []
+    for uvx in uv_objs:
+        uvs.append(uvx.uv)
+
+    # Return structures
+    all_new_vertices = []
+    all_new_uvs = []
+    all_new_triangles = []
+
+    # Counters for the relabeling of the polygon indices
+    c_antris = 0
+
+    for polygon_obj in polygon_objs:
+        ################
+        # Collect all vert coordinates and uv coordinates
+        # arranged by their polygon
+        ################
+        # Cycle through all vertex indices and add the vertex xyz to the list
+        poly_verts = []
+        for idx in polygon_obj.vertices:
+            poly_verts.append(verts[idx])
+
+        # Cycle through all vertex indices and add the uv coordinate
+        # that matches the vertex to the list
+        poly_uvs = []
+        for idx in polygon_obj.loop_indices:
+            poly_uvs.append(uvs[idx])
+
+        nVertsInPoly = len(polygon_obj.vertices)
+        if nVertsInPoly > 4:
+            # TODO:
+            #    new_triangles += triangulate_a_ngon(face_verts, face)
+            print( "[btop.misc.triangulate.py] ngons not yet implemented; only quads and tris." )
+        
+        elif nVertsInPoly == 4: # (a quad)
+            # Split the quad into to tris
+            new_verts, new_uvs, new_triangles = triangulate_a_quat_UV(poly_verts, poly_uvs, c_antris)
+            all_new_vertices += new_verts
+            all_new_uvs += new_uvs
+            all_new_triangles += new_triangles
+            c_antris = c_antris + 6 # Increment polygon vertex index counter by two triangles
+
+        else: 
+            # nVertsInPoly == 3 (a triangle)
+            # No need to split; just add the coordinates
+            #all_new_vertices += poly_verts
+            all_new_vertices += [(poly_verts[0], poly_verts[1], poly_verts[2])]
+            #all_new_uvs += poly_uvs
+            all_new_uvs += [(poly_uvs[0], poly_uvs[1], poly_uvs[2])]
+            #all_new_triangles += (c_antris, c_antris+1, c_antris+2) # New indices for the triangle
+            all_new_triangles += [(c_antris+0, c_antris+1, c_antris+2)]
+            c_antris = c_antris + 3 # Increment polygon vertex index counter by one triangle
+
+    # TODO
+    # We add tuples to lists and then append them to a big list, 
+    # then in mesh.py we decompose everything again. Not efficient.
+    
+    return all_new_vertices, all_new_uvs, all_new_triangles
+
+# Old triangulate function that does not support UVs
 def triangulate(obj):
     obj_data = obj.data
     vert_objs = obj_data.vertices
@@ -155,6 +263,8 @@ def triangulate(obj):
 
     faces = []
     for face_obj in face_objs:
+        # face_obj.vertices stores the vertex _indices_
+        # of the polygon
         faces.append(face_obj.vertices)
 
     new_triangles = []

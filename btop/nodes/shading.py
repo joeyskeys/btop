@@ -1087,7 +1087,8 @@ class PBRTTextureNodeImageMap(PBRTTextureNode):
 
     def export_comps(self, file_writer):
         comps = super().export_comps(file_writer)
-        comps.append('"string filename" "{}"'.format(self.filename))
+        # Escape '\' special characters
+        comps.append('"string filename" "{}"'.format( self.filename.replace("\\", "/") ) ) 
         comps.append('"string wrap" "{}"'.format(self.wrap))
         comps.append('"float maxanisotropy" {}'.format(self.maxanisotropy))
         comps.append('"bool trilinear" "{}"'.format('true' if self.trilinear else 'false'))

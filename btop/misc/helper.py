@@ -17,7 +17,6 @@
 
 import bpy
 
-
 class Registry(object):
     def __init__(self):
         self.cls_to_register = []

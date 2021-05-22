@@ -16,5 +16,6 @@
 # THE SOFTWARE.
 
 from .triangulate import triangulate
+from .triangulate import triangulateUV
 from .helper import registry
 from .helper import PBRTNodeTypes
