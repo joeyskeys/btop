@@ -18,6 +18,7 @@
 import os
 
 import bpy
+import time
 
 from ..sceneio import PBRTExporter
 from ..ui.preferences import get_pref
@@ -77,7 +78,10 @@ class PBRTRenderEngine(bpy.types.RenderEngine):
         y_resolution = render.resolution_y
 
         # Export pbrt cache file
+        exp_time = time.time()
         exporter.export(cache_filepath)
+        exp_elapsed = time.time() - exp_time
+        print( 'Export scene file description time (seconds): {}'.format(exp_elapsed) )
 
         try:
             cmd_comps = [pbrt_executable, '--outfile', outfile]

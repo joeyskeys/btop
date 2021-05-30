@@ -63,10 +63,10 @@ def is_in_triangle(v1, v2, v3, vert):
     def singed_area(v1, v2, v3):
         return v1.x * (v2.y - v3.y) + v2.y * (v3.y - v1.y) + v3.y * (v1.y - v2.y) > 0
 
-    print("handling", v1, v2, v3, vert)
-    print("test v1 v2", singed_area(v1, v2, vert))
-    print("test v2 v3", singed_area(v2, v3, vert))
-    print("test v3 v1", singed_area(v3, v1, vert))
+    # print("handling", v1, v2, v3, vert)
+    # print("test v1 v2", singed_area(v1, v2, vert))
+    # print("test v2 v3", singed_area(v2, v3, vert))
+    # print("test v3 v1", singed_area(v3, v1, vert))
 
     return singed_area(v1, v2, vert) and singed_area(v2, v3, vert) and singed_area(v3, v1, vert)
 
@@ -82,28 +82,30 @@ def triangulate_a_quat(verts, vert_indices):
         return [(vert_indices[0], vert_indices[1], vert_indices[3]),
                 (vert_indices[3], vert_indices[1], vert_indices[2])]
 
-def triangulate_a_quat_UV(verts, uvs, new_polyvert_idx):
+def triangulate_a_quat_UV(verts, normals, uvs, new_polyvert_idx):
     diagonal_a = (verts[0] - verts[2]).length
     diagonal_b = (verts[1] - verts[3]).length
 
     if diagonal_a < diagonal_b:
-        new_verts = [(verts[0], verts[1], verts[2]),
-                (verts[0], verts[2], verts[3])]
-        new_uvs = [(uvs[0], uvs[1], uvs[2]),
-                (uvs[0], uvs[2], uvs[3])]
-        tri_vert_indx = [(new_polyvert_idx+0, new_polyvert_idx+1, new_polyvert_idx+2),
-                (new_polyvert_idx+3, new_polyvert_idx+4, new_polyvert_idx+5)]
-        
-        return new_verts, new_uvs, tri_vert_indx
+        new_verts = [verts[0], verts[1], verts[2], 
+                    verts[0], verts[2], verts[3]]
+        new_normals = [normals[0], normals[1], normals[2],
+                    normals[0], normals[2], normals[3]]
+        new_uvs = [uvs[0], uvs[1], uvs[2],
+                    uvs[0], uvs[2], uvs[3]]
+        tri_vert_indx = [new_polyvert_idx+0, new_polyvert_idx+1, new_polyvert_idx+2,
+                        new_polyvert_idx+3, new_polyvert_idx+4, new_polyvert_idx+5]
     else:
-        new_verts = [(verts[0], verts[1], verts[3]),
-                (verts[3], verts[1], verts[2])]
-        new_uvs = [(uvs[0], uvs[1], uvs[3]),
-                (uvs[3], uvs[1], uvs[2])]
-        tri_vert_indx = [(new_polyvert_idx+0, new_polyvert_idx+1, new_polyvert_idx+2),
-                (new_polyvert_idx+3, new_polyvert_idx+4, new_polyvert_idx+5)]
+        new_verts = [verts[0], verts[1], verts[3],
+                    verts[3], verts[1], verts[2]]
+        new_normals = [normals[0], normals[1], normals[3],
+                    normals[3], normals[1], normals[2]]
+        new_uvs = [uvs[0], uvs[1], uvs[3], 
+                    uvs[3], uvs[1], uvs[2]]
+        tri_vert_indx = [new_polyvert_idx+0, new_polyvert_idx+1, new_polyvert_idx+2,
+                        new_polyvert_idx+3, new_polyvert_idx+4, new_polyvert_idx+5]
         
-        return new_verts, new_uvs, tri_vert_indx
+    return new_verts, new_normals, new_uvs, tri_vert_indx
 
 def triangulate_a_ngon(verts, vert_indices):
     normal = get_normal(verts)
@@ -178,19 +180,23 @@ def triangulate_a_ngon(verts, vert_indices):
 #
 # So, we're making a new function to do this.
 #
-def triangulateUV(obj):
+def triangulateUV(obj, animated_mesh):
     obj_data = obj.data
-    vert_objs = obj_data.vertices
+    #vert_objs = obj_data.vertices
+    vert_objs = animated_mesh.verts
     uv_objs = obj_data.uv_layers[0].data
     polygon_objs = obj_data.polygons
 
     ################
     # Collect all vert coordinates and uv coordinates into lists
     # to make them easier to index into
+    # Also collect per-vertex normals
     ################
     verts = []
+    normals = []
     for vert_obj in vert_objs:
         verts.append(vert_obj.co)
+        normals.append(vert_obj.normal)
 
     uvs = []
     for uvx in uv_objs:
@@ -198,6 +204,7 @@ def triangulateUV(obj):
 
     # Return structures
     all_new_vertices = []
+    all_new_normals = []
     all_new_uvs = []
     all_new_triangles = []
 
@@ -211,8 +218,10 @@ def triangulateUV(obj):
         ################
         # Cycle through all vertex indices and add the vertex xyz to the list
         poly_verts = []
+        poly_vertnormals = []
         for idx in polygon_obj.vertices:
             poly_verts.append(verts[idx])
+            poly_vertnormals.append(normals[idx])
 
         # Cycle through all vertex indices and add the uv coordinate
         # that matches the vertex to the list
@@ -228,8 +237,9 @@ def triangulateUV(obj):
         
         elif nVertsInPoly == 4: # (a quad)
             # Split the quad into to tris
-            new_verts, new_uvs, new_triangles = triangulate_a_quat_UV(poly_verts, poly_uvs, c_antris)
+            new_verts, new_normals, new_uvs, new_triangles = triangulate_a_quat_UV(poly_verts, poly_vertnormals, poly_uvs, c_antris)
             all_new_vertices += new_verts
+            all_new_normals += new_normals
             all_new_uvs += new_uvs
             all_new_triangles += new_triangles
             c_antris = c_antris + 6 # Increment polygon vertex index counter by two triangles
@@ -238,23 +248,25 @@ def triangulateUV(obj):
             # nVertsInPoly == 3 (a triangle)
             # No need to split; just add the coordinates
             #all_new_vertices += poly_verts
-            all_new_vertices += [(poly_verts[0], poly_verts[1], poly_verts[2])]
+            all_new_vertices += poly_verts
+            all_new_normals += poly_vertnormals
             #all_new_uvs += poly_uvs
-            all_new_uvs += [(poly_uvs[0], poly_uvs[1], poly_uvs[2])]
+            all_new_uvs += poly_uvs
             #all_new_triangles += (c_antris, c_antris+1, c_antris+2) # New indices for the triangle
-            all_new_triangles += [(c_antris+0, c_antris+1, c_antris+2)]
+            all_new_triangles += [c_antris+0, c_antris+1, c_antris+2]
             c_antris = c_antris + 3 # Increment polygon vertex index counter by one triangle
 
     # TODO
     # We add tuples to lists and then append them to a big list, 
     # then in mesh.py we decompose everything again. Not efficient.
     
-    return all_new_vertices, all_new_uvs, all_new_triangles
+    return all_new_vertices, all_new_normals, all_new_uvs, all_new_triangles
 
 # Old triangulate function that does not support UVs
-def triangulate(obj):
+def triangulate(obj, animated_mesh):
     obj_data = obj.data
-    vert_objs = obj_data.vertices
+    #vert_objs = obj_data.vertices
+    vert_objs = animated_mesh.verts
     face_objs = obj_data.polygons
 
     verts = []

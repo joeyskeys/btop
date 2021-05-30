@@ -36,6 +36,10 @@ class LightIO(object):
         self.area_light_geometries = []
 
         for object in bpy.data.objects:
+            # Skip object write if hidden
+            if object.hide_get():
+                continue
+
             if object.type == 'LIGHT':
                 light_type = object.data.type
 
@@ -56,7 +60,7 @@ class LightIO(object):
                 if light_type == 'POINT':
                     if light_props.isgoniometric:
                         light_line_comps.append('"goniometric" "rgb I" [{} {} {}] "string mapname" "{}"'.format(
-                            light_color.r, light_color.g, light_color.b, light_props.mapname
+                            light_color.r, light_color.g, light_color.b, light_props.mapname.replace("\\", "/")
                         ))
                     else:
                         light_line_comps.append('"point"')
@@ -67,7 +71,7 @@ class LightIO(object):
                 elif light_type == 'SUN':
                     if light_props.isprojection:
                         light_line_comps.append('"projection" "rgb I" [{} {} {}] "string mapname" "{}"').format(
-                            light_color.r, light_color.g, light_color.b, light_props.mapname
+                            light_color.r, light_color.g, light_color.b, light_props.mapname.replace("\\", "/")
                         )
                     else:
                         light_line_comps.append('"distant"')
@@ -118,6 +122,6 @@ class LightIO(object):
         light_line_comps = ['LightSource "infinite"']
         lum = world_props.luminance
         light_line_comps.append('"rgb L" [{} {} {}] "integer samples" {} "string mapname" "{}"'.format(
-            lum.r, lum.g, lum.b, world_props.samples, world_props.mapname
+            lum.r, lum.g, lum.b, world_props.samples, world_props.mapname.replace("\\", "/")
         ))
         writer.write(' '.join(light_line_comps) + '\n\n')

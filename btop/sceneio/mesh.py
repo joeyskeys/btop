@@ -16,6 +16,7 @@
 # THE SOFTWARE.
 
 import bpy
+import bmesh
 
 import math
 
@@ -60,41 +61,69 @@ def get_mesh_comps(meshobj, indent=0):
     # Triangulate the mesh
     # 2021-05-20 TODO Output the UV coordinates
 
-    if meshobj.data.uv_layers != None:
-        verts, uvs, faces = triangulateUV(meshobj)
-        mesh_comps.append(indent * '\t' + '# Num verts: {}  Num uvs: {}  Num faces: {}'.format( len(verts), len(uvs), len(faces) ) )
+    # Generate new transformed vertices to consider the bone animation of the object
+    # From https://odederell3d.blog/2020/09/28/blender-python-access-animated-vertices-data/
+    depgraph = bpy.context.evaluated_depsgraph_get()
+    bm = bmesh.new()
+    bm.verts.ensure_lookup_table()
+    bm.from_object( meshobj, depgraph )
+
+    hasUVs = meshobj.data.uv_layers != None and len(meshobj.data.uv_layers) > 0
+    if hasUVs:
+        verts, normals, uvs, faces = triangulateUV(meshobj, bm)
+        mesh_comps.append(indent * '\t' + '# Num verts: {}  Num normals: {}  Num uvs: {}  Num faces: {}'.format( len(verts), len(normals), len(uvs), len(faces) ) )
     else:
-        verts, faces = triangulate(meshobj)
+        verts, faces = triangulate(meshobj, bm)
         mesh_comps.append(indent * '\t' + '# Num verts: {}  Num faces: {}'.format( len(verts), len(faces) ) )
 
 
     mesh_comps.append(indent * '\t' + 'Shape "trianglemesh"')
 
-    vert_str = ''
-    for vert in verts:
-        vert0 = vert[0]
-        vert1 = vert[1]
-        vert2 = vert[2]
-        vert_str += '{} {} {} '.format(vert0[0], vert0[1], vert0[2])
-        vert_str += '{} {} {} '.format(vert1[0], vert1[1], vert1[2])
-        vert_str += '{} {} {} '.format(vert2[0], vert2[1], vert2[2])
-    mesh_comps.append((indent + 1) * '\t' + '"point P" [' + vert_str[:-1] + ' ]')
 
-    if meshobj.data.uv_layers != None:
+
+    if not hasUVs:
+        vert_str = ''
+        for vert in verts:
+            vert_str += '{} {} {} '.format(*vert.to_tuple())
+        mesh_comps.append((indent + 1) * '\t' + '"point P" [' + vert_str[:-1] + ' ]')
+
+        face_str = ''
+        for face in faces:
+            face_str += '{} {} {} '.format(*face)
+        mesh_comps.append((indent + 1) * '\t' + '"integer indices" [ ' + face_str[:-1] + ' ]')
+    else:
+        vert_str = ''
+        for vert in verts:
+            vert_str += '{} {} {} '.format(*vert)
+        mesh_comps.append((indent + 1) * '\t' + '"point P" [' + vert_str[:-1] + ' ]')
+
+        normal_str = ''
+        for n in normals:
+            normal_str += '{} {} {} '.format(*n)
+            # n0 = n[0]
+            # n1 = n[1]
+            # n2 = n[2]
+            # normal_str += '{} {} {} '.format(n0[0], n0[1], n0[2])
+            # normal_str += '{} {} {} '.format(n1[0], n1[1], n1[2])
+            # normal_str += '{} {} {} '.format(n2[0], n2[1], n2[2])
+        mesh_comps.append((indent + 1) * '\t' + '"normal N" [' + normal_str[:-1] + ' ]')
+
         uv_str = ''
         for uv in uvs:
-            uv0 = uv[0]
-            uv1 = uv[1]
-            uv2 = uv[2]
-            uv_str += '{} {} '.format(uv0[0], uv0[1])
-            uv_str += '{} {} '.format(uv1[0], uv1[1])
-            uv_str += '{} {} '.format(uv2[0], uv2[1])
+            uv_str += '{} {} '.format(*uv)
+            # uv0 = uv[0]
+            # uv1 = uv[1]
+            # uv2 = uv[2]
+            # uv_str += '{} {} '.format(uv0[0], uv0[1])
+            # uv_str += '{} {} '.format(uv1[0], uv1[1])
+            # uv_str += '{} {} '.format(uv2[0], uv2[1])
         mesh_comps.append((indent + 1) * '\t' + '"float uv" [' + uv_str[:-1] + ' ]')
 
-    face_str = ''
-    for face in faces:
-        face_str += '{} {} {} '.format(*face)
-    mesh_comps.append((indent + 1) * '\t' + '"integer indices" [ ' + face_str[:-1] + ' ]')
+        face_str = ''
+        for face in faces:
+            #face_str += '{} {} {} '.format(*face)
+            face_str += '{} '.format(face)
+        mesh_comps.append((indent + 1) * '\t' + '"integer indices" [ ' + face_str[:-1] + ' ]')
 
     return mesh_comps
 

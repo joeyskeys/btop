@@ -48,38 +48,37 @@ class IntegratorIO(object):
                                                                                       p_y_min,
                                                                                       min(p_y_max, film_y_resolution)))
 
-        if integrator_type in ["path", "bdpt"]:
+        if integrator_type in ["path", "tof_path", "bdpt", "tof_bdpt"]:
             integrator_line_comps.append('"string lightsamplestrategy" "{}"'.format(integrator_props.light_sample_strategy))
 
-        if integrator_type == "path":
+        if integrator_type in ["path", "tof_path"]:
             integrator_line_comps.append('"float rrthreshold" {}'.format(integrator_props.rr_threshold))
 
         if integrator_type == "directlighting":
             integrator_line_comps.append('"string strategy" "{}"'.format(integrator_props.strategy))
 
-        if integrator_type == "bdpt":
-            integrator_line_comps.append('"bool visualizestrategies" {}'.format(integrator_props.visualizestrategies))
-            integrator_line_comps.append('"bool visualizeweights" {}'.format(integrator_props.visualizeweights))
+        # 2021-05-26 JamesTompkin - These seem to be causing problems when loading into pbrt
+        # TODO Removing for now; defaults in PBRT are 'False'
+        #if integrator_type == "bdpt":
+        #    integrator_line_comps.append('"bool visualizestrategies" {}'.format(integrator_props.visualizestrategies))
+        #    integrator_line_comps.append('"bool visualizeweights" {}'.format(integrator_props.visualizeweights))
 
-        if integrator_type == "mlt":
+        if integrator_type in ["mlt", "tof_mlt"]:
             integrator_line_comps.append('"integer bootstrapsamples" {}'.format(integrator_props.bootstrap_samples))
             integrator_line_comps.append('"integer chains" {}'.format(integrator_props.chains))
             integrator_line_comps.append('"integer mutationsperpixel" {}'.format(integrator_props.mutations_per_pixel))
             integrator_line_comps.append('"float largestepprobability" {}'.format(integrator_props.largest_step_probability))
             integrator_line_comps.append('"float sigma" {}'.format(integrator_props.sigma))
 
-        if integrator_type == "sppm":
+        if integrator_type in ["sppm", "tof_sppm"]:
             integrator_line_comps.append('"integer iterations" {}'.format(integrator_props.iterations))
             integrator_line_comps.append('"integer photonsperiteration" {}'.format(integrator_props.photons_per_iteration))
             integrator_line_comps.append('"integer imagewritefrequency" {}'.format(integrator_props.image_write_frequency))
             integrator_line_comps.append('"float radius" {}'.format(integrator_props.radius))
 
-        if integrator_type in ["tof_path", "tof_bdpt", "tof_mlt"]:
+        if integrator_type in ["tof_path", "tof_bdpt", "tof_mlt", "tof_sppm"]:
             integrator_line_comps.append('"float depthrange" {}'.format(integrator_props.depthrange))
-            integrator_line_comps.append('"integer tofType" {}'.format(integrator_props.tofType))
-
-        if integrator_type == "tof_mlt":
-            integrator_line_comps.append('"integer mutationsperpixel" {}'.format(integrator_props.mutations_per_pixel))
+            integrator_line_comps.append('"integer toftype" {}'.format(integrator_props.toftype))
 
 
         writer.write(' '.join(integrator_line_comps) + '\n\n')

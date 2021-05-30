@@ -17,6 +17,8 @@
 
 import bpy
 
+from ..nodes import shading
+
 
 class MaterialIO(object):
     """
@@ -51,4 +53,11 @@ class MaterialIO(object):
             shader.export(indent, writer)
 
         else:
+            # No shader fits; attribute a silly material instead
+            print( '[btop.material.py] None pbrt material assigned : %s' %shader.name )
+
+            #repl_shader = shading.PBRTShaderNodeMatte()
+            #repl_shader.socket_dict['Kd'] = ('NodeSocketColor', (1.0, 0.412, 0.706, 1.0))
+            #repl_shader.export(indent, writer)
+
             raise Exception('None pbrt material assigned : %s' %shader.name)

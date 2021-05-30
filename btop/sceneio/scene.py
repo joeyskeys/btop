@@ -39,7 +39,12 @@ class SceneIO(object):
         # Light should be written in the world block
         self.lightio.write_to_file(writer)
 
-        for object in bpy.data.objects:
+        # 2021-05-26 JT - don't output all data objects; only output all scene objects
+        #for object in bpy.data.objects:
+        for object in bpy.context.scene.objects:
+            # Skip object write if hidden
+            if object.hide_get():
+                continue
 
             if object.type == 'MESH' and object not in self.lightio.area_light_geometries:
                 writer.write('AttributeBegin\n')

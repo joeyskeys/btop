@@ -31,12 +31,12 @@ This file is reserved for future renderer setting.
 class PBRTSettingProperties(bpy.types.PropertyGroup):
     pbrt_location: bpy.props.StringProperty(name="pbrt_location",
                                             description="PBRT executable location",
-                                            default=shutil.which('pbrt') or 'c:\\Users\\james\\Desktop\\pbrt-tof\\build\\MSVCx64\\Release\\pbrt.exe',
+                                            default='C:/Users/james/Desktop/pbrt-tof/build/MSVCx64/Release/pbrt.exe', # shutil.which('pbrt') or 
                                             subtype='FILE_PATH')
 
     pbrt_cache_folder: bpy.props.StringProperty(name="pbrt_cache_folder",
                                                 description="PBRT cache folder",
-                                                default=os.path.join(os.path.expanduser("~"), '\\Desktop\\pbrt_scene'),
+                                                default=os.path.join(os.path.expanduser("~"), ''),
                                                 subtype='FILE_PATH')
 
 
