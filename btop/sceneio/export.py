@@ -39,11 +39,7 @@ class PBRTExporter(object):
     def export(self, output_path):
         file_handler = open(output_path, 'w')
 
-        # 2021-05-26 Also output a camera definition in numpy
-        output_numpy_path = copy.deepcopy(output_path)
-        output_numpy_path = output_numpy_path.replace('.pbrt', '.npy')
-
-        self.cameraio.write_to_file(file_handler, output_numpy_path)
+        self.cameraio.write_to_file(file_handler)
 
         self.samplerio.write_to_file(file_handler)
         self.integratorio.write_to_file(file_handler)

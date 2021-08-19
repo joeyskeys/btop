@@ -26,12 +26,7 @@ class PBRTIntegratorProperties(bpy.types.PropertyGroup):
                                                 ("directlighting", "DirectLighting", ""),
                                                 ("mlt", "MLT", ""),
                                                 ("sppm", "SPPM", ""),
-                                                ("whited", "Whited", ""),
-                                                ("tof_path", "ToF Path", ""),
-                                                ("tof_bdpt", "ToF BDPT", ""),
-                                                ("tof_mlt", "ToF MLT", ""),
-                                                ("tof_sppm", "ToF SPPM", ""),
-                                                ("depth", "Depth", "")],
+                                                ("whited", "Whited", "")],
                                             default="path")
 
     # Path integrator parameters
@@ -148,19 +143,6 @@ class PBRTIntegratorProperties(bpy.types.PropertyGroup):
                                     description="Initial photon search radius",
                                     default=1,
                                     soft_max=10,
-                                    min=0)
-
-    # ToF properties
-    depthrange: bpy.props.FloatProperty(name="depthrange",
-                                        description="Depth range of the scene being rendered",
-                                        default=400,
-                                        soft_max=1000,
-                                        min=0)
-    
-    toftype: bpy.props.IntProperty(name="toftype",
-                                    description="Time of Flight camera type",
-                                    default=0,
-                                    soft_max=0,
                                     min=0)
 
 

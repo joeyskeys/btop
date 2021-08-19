@@ -31,7 +31,7 @@ This file is reserved for future renderer setting.
 class PBRTSettingProperties(bpy.types.PropertyGroup):
     pbrt_location: bpy.props.StringProperty(name="pbrt_location",
                                             description="PBRT executable location",
-                                            default='C:/Users/james/Desktop/pbrt-tof/build/MSVCx64/Release/pbrt.exe', # shutil.which('pbrt') or 
+                                            default=shutil.which('pbrt') or '',
                                             subtype='FILE_PATH')
 
     pbrt_cache_folder: bpy.props.StringProperty(name="pbrt_cache_folder",

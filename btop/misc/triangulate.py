@@ -175,14 +175,24 @@ def triangulate_a_ngon(verts, vert_indices):
 # Or, put another way, uv coordinates per polygon.
 # 
 # This restricts UV maps with cuts in the unwrapping.
-# As such, we have to duplicate vertices and give them unique
-# UVs for each triangle, and then re-arrange the polygon indices
+# As such, we will duplicate vertices and give them unique
+# UVs for each triangle, and then duplicate the polygon indices.
 #
-# So, we're making a new function to do this.
+# This is inefficient, but works.
 #
+# Inputs:
+# - obj: The object to draw
+# - animated_mesh: The current animated state of the vertices.
+#                  In Blender, to my knowledge, we can't access 
+#                  the animated vert positions from obj, so instead
+#                  we pass them in. Not ideal.
+# 
 def triangulateUV(obj, animated_mesh):
     obj_data = obj.data
+    # Alternative way of accessing vertices that does not 
+    # include animated positions.
     #vert_objs = obj_data.vertices
+    # Access of vertices affected by animation
     vert_objs = animated_mesh.verts
     uv_objs = obj_data.uv_layers[0].data
     polygon_objs = obj_data.polygons
@@ -231,9 +241,8 @@ def triangulateUV(obj, animated_mesh):
 
         nVertsInPoly = len(polygon_obj.vertices)
         if nVertsInPoly > 4:
-            # TODO:
-            #    new_triangles += triangulate_a_ngon(face_verts, face)
-            print( "[btop.misc.triangulate.py] ngons not yet implemented; only quads and tris." )
+            # TODO: Add support for ngons
+            print( "[btop.misc.triangulate.py: triangulateUV] ngons not yet implemented; only quads and tris." )
         
         elif nVertsInPoly == 4: # (a quad)
             # Split the quad into to tris
@@ -247,12 +256,9 @@ def triangulateUV(obj, animated_mesh):
         else: 
             # nVertsInPoly == 3 (a triangle)
             # No need to split; just add the coordinates
-            #all_new_vertices += poly_verts
             all_new_vertices += poly_verts
             all_new_normals += poly_vertnormals
-            #all_new_uvs += poly_uvs
             all_new_uvs += poly_uvs
-            #all_new_triangles += (c_antris, c_antris+1, c_antris+2) # New indices for the triangle
             all_new_triangles += [c_antris+0, c_antris+1, c_antris+2]
             c_antris = c_antris + 3 # Increment polygon vertex index counter by one triangle
 
@@ -262,10 +268,21 @@ def triangulateUV(obj, animated_mesh):
     
     return all_new_vertices, all_new_normals, all_new_uvs, all_new_triangles
 
-# Old triangulate function that does not support UVs
+# Triangulate function that does not support UVs
+#
+# Inputs:
+# - obj: The object to draw
+# - animated_mesh: The current animated state of the vertices.
+#                  In Blender, to my knowledge, we can't access 
+#                  the animated vert positions from obj, so instead
+#                  we pass them in. Not ideal.
+# 
 def triangulate(obj, animated_mesh):
     obj_data = obj.data
+    # Alternative way of accessing vertices that does not 
+    # include animated positions.
     #vert_objs = obj_data.vertices
+    # Access of vertices affected by animation
     vert_objs = animated_mesh.verts
     face_objs = obj_data.polygons
 

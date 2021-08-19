@@ -58,11 +58,14 @@ def get_mesh_comps(meshobj, indent=0):
     mesh_comps.append(indent * '\t' + 'Scale {} {} {}'.format(*scale))
     mesh_comps.append(indent * '\t' + 'Rotate {} {} {} {}'.format(rotate_angle, *rotate_vec))
 
-    # Triangulate the mesh
-    # 2021-05-20 TODO Output the UV coordinates
 
-    # Generate new transformed vertices to consider the bone animation of the object
+    # 2021-05-20 James Tompkin
+    #
+    # Here, passing in meshobj and accessing vertices by meshobj.vertices does not provide the 
+    # animated position of verts.
+    # Instead, generate new transformed vertices to consider the animation of the object.
     # From https://odederell3d.blog/2020/09/28/blender-python-access-animated-vertices-data/
+    #
     depgraph = bpy.context.evaluated_depsgraph_get()
     bm = bmesh.new()
     bm.verts.ensure_lookup_table()
@@ -80,7 +83,8 @@ def get_mesh_comps(meshobj, indent=0):
     mesh_comps.append(indent * '\t' + 'Shape "trianglemesh"')
 
 
-
+    # James Tompkin: This is messy because I'm bad at Python; but it works.
+    # TODO triangulate and triangulateUV should use the same data structures.
     if not hasUVs:
         vert_str = ''
         for vert in verts:
@@ -100,28 +104,15 @@ def get_mesh_comps(meshobj, indent=0):
         normal_str = ''
         for n in normals:
             normal_str += '{} {} {} '.format(*n)
-            # n0 = n[0]
-            # n1 = n[1]
-            # n2 = n[2]
-            # normal_str += '{} {} {} '.format(n0[0], n0[1], n0[2])
-            # normal_str += '{} {} {} '.format(n1[0], n1[1], n1[2])
-            # normal_str += '{} {} {} '.format(n2[0], n2[1], n2[2])
         mesh_comps.append((indent + 1) * '\t' + '"normal N" [' + normal_str[:-1] + ' ]')
 
         uv_str = ''
         for uv in uvs:
             uv_str += '{} {} '.format(*uv)
-            # uv0 = uv[0]
-            # uv1 = uv[1]
-            # uv2 = uv[2]
-            # uv_str += '{} {} '.format(uv0[0], uv0[1])
-            # uv_str += '{} {} '.format(uv1[0], uv1[1])
-            # uv_str += '{} {} '.format(uv2[0], uv2[1])
         mesh_comps.append((indent + 1) * '\t' + '"float uv" [' + uv_str[:-1] + ' ]')
 
         face_str = ''
         for face in faces:
-            #face_str += '{} {} {} '.format(*face)
             face_str += '{} '.format(face)
         mesh_comps.append((indent + 1) * '\t' + '"integer indices" [ ' + face_str[:-1] + ' ]')
 

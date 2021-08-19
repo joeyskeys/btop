@@ -17,7 +17,6 @@
 
 import bpy
 import mathutils
-import numpy as np
 
 import math
 
@@ -33,7 +32,7 @@ class CameraIO(object):
         self.shutter_close = None
         self.extra_params = {}
 
-    def write_to_file(self, writer, output_numpy_path):
+    def write_to_file(self, writer):
         active_camera = bpy.context.scene.camera
 
         # Add scale to convert right hand system to left hand system
@@ -80,18 +79,6 @@ class CameraIO(object):
             camera_line_comps.append('"float aperturediameter" {}'.format(camera_props.aperture_diameter))
             camera_line_comps.append('"float focusdistance" {}'.format(camera_props.focus_distance))
             camera_line_comps.append('"bool simpleweighting" "{}"'.format(camera_props.simple_weighting))
-
-       
-        # TODO write out camera properties as .npy file
-        depgraph = bpy.context.evaluated_depsgraph_get()
-        np.savetxt( output_numpy_path.replace(".npy", "_projection_matrix.txt"), np.array( active_camera.calc_matrix_camera(depgraph) ) )
-        np.savetxt( output_numpy_path.replace(".npy", "_world_matrix.txt"), np.array( camera_matrix ) )
-        np.savetxt( output_numpy_path.replace(".npy", "_horiz_fov.txt"), np.array( [bpy.context.scene.camera.data.angle] ) )
-        np.savetxt( output_numpy_path.replace(".npy", "_filmratio.txt"), np.array( [bpy.context.scene.render.resolution_y / bpy.context.scene.render.resolution_x] ) )
-        np.savetxt( output_numpy_path.replace(".npy", "_basis_tform.txt"), np.array( [-1, 1, 1] ) )
-        np.savetxt( output_numpy_path.replace(".npy", "_eyepos.txt"), np.array( eye_pos ) )
-        np.savetxt( output_numpy_path.replace(".npy", "_lookat.txt"), np.array( look_at ) )
-        np.savetxt( output_numpy_path.replace(".npy", "_up.txt"), np.array( up_vec ) )
 
         # Write out
         writer.write(scale_line + '\n')

@@ -48,10 +48,10 @@ class IntegratorIO(object):
                                                                                       p_y_min,
                                                                                       min(p_y_max, film_y_resolution)))
 
-        if integrator_type in ["path", "tof_path", "bdpt", "tof_bdpt"]:
+        if integrator_type in ["path", "bdpt"]:
             integrator_line_comps.append('"string lightsamplestrategy" "{}"'.format(integrator_props.light_sample_strategy))
 
-        if integrator_type in ["path", "tof_path"]:
+        if integrator_type == "path":
             integrator_line_comps.append('"float rrthreshold" {}'.format(integrator_props.rr_threshold))
 
         if integrator_type == "directlighting":
@@ -63,23 +63,18 @@ class IntegratorIO(object):
         #    integrator_line_comps.append('"bool visualizestrategies" {}'.format(integrator_props.visualizestrategies))
         #    integrator_line_comps.append('"bool visualizeweights" {}'.format(integrator_props.visualizeweights))
 
-        if integrator_type in ["mlt", "tof_mlt"]:
+        if integrator_type == "mlt":
             integrator_line_comps.append('"integer bootstrapsamples" {}'.format(integrator_props.bootstrap_samples))
             integrator_line_comps.append('"integer chains" {}'.format(integrator_props.chains))
             integrator_line_comps.append('"integer mutationsperpixel" {}'.format(integrator_props.mutations_per_pixel))
             integrator_line_comps.append('"float largestepprobability" {}'.format(integrator_props.largest_step_probability))
             integrator_line_comps.append('"float sigma" {}'.format(integrator_props.sigma))
 
-        if integrator_type in ["sppm", "tof_sppm"]:
+        if integrator_type == "sppm":
             integrator_line_comps.append('"integer iterations" {}'.format(integrator_props.iterations))
             integrator_line_comps.append('"integer photonsperiteration" {}'.format(integrator_props.photons_per_iteration))
             integrator_line_comps.append('"integer imagewritefrequency" {}'.format(integrator_props.image_write_frequency))
             integrator_line_comps.append('"float radius" {}'.format(integrator_props.radius))
-
-        if integrator_type in ["tof_path", "tof_bdpt", "tof_mlt", "tof_sppm"]:
-            integrator_line_comps.append('"float depthrange" {}'.format(integrator_props.depthrange))
-            integrator_line_comps.append('"integer toftype" {}'.format(integrator_props.toftype))
-
 
         writer.write(' '.join(integrator_line_comps) + '\n\n')
 
