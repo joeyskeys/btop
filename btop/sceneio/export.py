@@ -15,7 +15,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-import bpy
+import bpy, copy
 
 from .camera import CameraIO
 from .film import FilmIO

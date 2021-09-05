@@ -18,6 +18,7 @@
 import os
 
 import bpy
+import time
 
 from ..sceneio import PBRTExporter
 from ..ui.preferences import get_pref
@@ -46,9 +47,27 @@ class PBRTRenderEngine(bpy.types.RenderEngine):
         cache_folder = pref.pbrt_cache_folder
         use_v4 = pref.pbrt_use_v4
 
+        # 2021-05-20: Bizarro bug that James couldn't work out:
+        # - When rendering stills (F12; Render->Render Image), the current animation 
+        # frame works fine and the expected output is produced.
+        # - When rendering animations (CTRL-F12; Render->Render Animation), only the
+        # viewport frame set at the beginning of the sequence is rendered, 
+        # e.g., if frame 7 is set before CTRL-F12, only frame 7 will ever be rendered.
+        # - The fix is weird - we pull the current frame (which interates correctly 
+        # when rendering an animation) and then re-set the scene frame.
+        # - Clearly a hack. I spent ~2 hours digging around in Blender source code to
+        # try and find out why, but failed. So, we live with the hack.
+        #
+        # Get animation frame from scene
+        animframe = bpy.context.scene.frame_current
+        # Set the current frame to be
+        bpy.context.scene.frame_set(animframe)
+
         # Setup output file name
         # todo : decide output file type with an user option
         filename = os.path.basename(bpy.data.filepath) or 'tmp.blend'
+        # Insert framenumber from animation
+        filename = filename.replace( '.blend', '_{:04d}.blend'.format(animframe) )
         cache_filepath = os.path.join(cache_folder, filename.replace('.blend', '.pbrt'))
         converted_cache_filepath = os.path.join(cache_folder, filename.replace('.blend', '_converted.pbrt'))
         outfile = os.path.join(cache_folder, filename.replace('.blend', '.exr'))
@@ -59,7 +78,10 @@ class PBRTRenderEngine(bpy.types.RenderEngine):
         y_resolution = render.resolution_y
 
         # Export pbrt cache file
+        exp_time = time.time()
         exporter.export(cache_filepath)
+        exp_elapsed = time.time() - exp_time
+        print( 'Export scene file description time (seconds): {}'.format(exp_elapsed) )
 
         try:
             cmd_comps = [pbrt_executable, '--outfile', outfile]

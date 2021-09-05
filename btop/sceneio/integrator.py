@@ -57,9 +57,11 @@ class IntegratorIO(object):
         if integrator_type == "directlighting":
             integrator_line_comps.append('"string strategy" "{}"'.format(integrator_props.strategy))
 
-        if integrator_type == "bdpt":
-            integrator_line_comps.append('"bool visualizestrategies" {}'.format(integrator_props.visualizestrategies))
-            integrator_line_comps.append('"bool visualizeweights" {}'.format(integrator_props.visualizeweights))
+        # 2021-05-26 JamesTompkin - These seem to be causing problems when loading into pbrt
+        # TODO Removing for now; defaults in PBRT are 'False'
+        #if integrator_type == "bdpt":
+        #    integrator_line_comps.append('"bool visualizestrategies" {}'.format(integrator_props.visualizestrategies))
+        #    integrator_line_comps.append('"bool visualizeweights" {}'.format(integrator_props.visualizeweights))
 
         if integrator_type == "mlt":
             integrator_line_comps.append('"integer bootstrapsamples" {}'.format(integrator_props.bootstrap_samples))

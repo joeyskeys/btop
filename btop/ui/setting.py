@@ -36,7 +36,7 @@ class PBRTSettingProperties(bpy.types.PropertyGroup):
 
     pbrt_cache_folder: bpy.props.StringProperty(name="pbrt_cache_folder",
                                                 description="PBRT cache folder",
-                                                default=os.path.join(os.path.expanduser("~"), 'pbrt_scene'),
+                                                default=os.path.join(os.path.expanduser("~"), ''),
                                                 subtype='FILE_PATH')
 
 

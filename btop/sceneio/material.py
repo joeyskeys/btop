@@ -17,6 +17,8 @@
 
 import bpy
 
+from ..nodes import shading
+
 
 class MaterialIO(object):
     """
@@ -51,4 +53,8 @@ class MaterialIO(object):
             shader.export(indent, writer)
 
         else:
+            # No shader fits
+            # TODO Attribute a standard material instead such that something is rendered?
+            print( '[btop.material.py] None pbrt material assigned : %s' %shader.name )
+
             raise Exception('None pbrt material assigned : %s' %shader.name)
