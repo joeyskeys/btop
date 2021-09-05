@@ -167,41 +167,38 @@ class PBRT_PT_integrator(bpy.types.Panel):
         layout.row().prop(integrator_props, "integrator_type", text="Integrator Type")
         layout.row().prop(integrator_props, "max_depth", text="Max Depth")
 
-        if integrator_type in ["path", "directlighting", "bdpt", "tof_path", "tof_bdpt", "depth"]:
+        if integrator_type in ["path", "directlighting", "bdpt", "depth"]:
             layout.row().prop(integrator_props, "pixelbound_x_min", text="Pixelbound X Min")
             layout.row().prop(integrator_props, "pixelbound_x_max", text="Pixelbound X Max")
             layout.row().prop(integrator_props, "pixelbound_y_min", text="Pixelbound Y Min")
             layout.row().prop(integrator_props, "pixelbound_y_max", text="Pixelbound Y Max")
 
-        if integrator_type in ["path", "bdpt", "tof_path", "tof_bdpt"]:
+        if integrator_type in ["path", "bdpt",]:
             layout.row().prop(integrator_props, "light_sample_strategy", text="Light Sample Strategy")
 
-        if integrator_type in ["path", "tof_path"]:
+        if integrator_type in ["path",]:
             layout.row().prop(integrator_props, "rr_threshold", text="RR Threshold")
 
         if integrator_type == "directlightingg":
             layout.row().prop(integrator_props, "strategy", text="Strategy")
 
-        if integrator_type in ["bdpt", "tof_bdpt"]:
+        if integrator_type in ["bdpt",]:
             layout.row().prop(integrator_props, "visualize_strategies", text="Visualize Strategies")
             layout.row().prop(integrator_props, "visualize_weights", text="Visualize Weights")
 
-        if integrator_type in ["mlt", "tof_mlt"]:
+        if integrator_type in ["mlt",]:
             layout.row().prop(integrator_props, "bootstrap_samples", text="Bootstrap Samples")
             layout.row().prop(integrator_props, "chains", text="Chains")
             layout.row().prop(integrator_props, "mutations_per_pixel", text="Mutations Per Pixel")
             layout.row().prop(integrator_props, "largest_step_probability", text="Largest Step Probability")
             layout.row().prop(integrator_props, "sigma", text="Sigma")
 
-        if integrator_type in ["sppm", "tof_sppm"]:
+        if integrator_type in ["sppm",]:
             layout.row().prop(integrator_props, "iterations", text="Iterations")
             layout.row().prop(integrator_props, "photons_per_iteration", text="Photons Per Iteration")
             layout.row().prop(integrator_props, "image_write_frequency", text="Image Write Frequency")
             layout.row().prop(integrator_props, "radius", text="Radius")
 
-        if integrator_type in ["tof_path", "tof_bdpt", "tof_mlt"]:
-            layout.row().prop(integrator_props, "depthrange", text="Depth range in the scene") 
-            layout.row().prop(integrator_props, "toftype", text="ToF type")
 
 def register():
     # Register property group
