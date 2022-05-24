@@ -71,7 +71,7 @@ class CameraIO(object):
                 # Get fov from camera attributes
                 angle = bpy.context.scene.camera.data.angle
                 ratio = bpy.context.scene.render.resolution_y / bpy.context.scene.render.resolution_x
-                fov = math.degrees(angle * ratio)
+                fov = 2 * math.degrees(math.atan(ratio * math.tan(angle / 2)))
                 camera_line_comps.append('"float fov" {}'.format(fov))
 
         else:
